@@ -1,10 +1,13 @@
-# Orion5
+# Orion5 Robotic Arm
+
+### Orion5 User Manual available here: https://goo.gl/h3i2br
 
 ## MATLAB Library
 Libraries directory contains `Orion5.m`, this MATLAB library interfaces with a Python server that will need to be launched before using the MATLAB library.
-1. Install dependencies for Python server using `pip3 install pyserial`.
-2. Launch the Python server using `python3 Orion5_Server.py`.
-3. Now when the `Orion5.m` class is used in MATLAB it will interface with Python.
+1. Ensure your machine has python3.6 installed.
+2. Install dependencies for Python server using `pip3 install pyserial`.
+3. Launch the Python server using `python3 Orion5_Server.py`.
+4. Now when the `Orion5.m` class is used in MATLAB it will interface with Python.
 
 ### Basic Usage 
 The library pings the Python server every second if no other library functions are being called, this is like a watchdog timer, if Python server doesn't hear anything for 5 seconds, it will return to waiting for a new connection.  
@@ -39,7 +42,7 @@ The smart servos used in Orion5 have a number of control modes; namely `POS_SPEE
 
 **VELOCITY:** In this mode the servo will move at the speed set by `setJointSpeed` or `setAllJointsSpeed` and ignore desired position and hard angle limits set in the servo by the embedded electronics. Users must make sure to read servo positions in a high frequency control loop to avoid driving joints through each other. There is no acceleration profile in this mode; so users will have to consider this in their control system implementations - Otherwise inertia of moving joints will damage gearboxes and make for not-very-smooth motion.
 
-_(Future firmware upgrade will enable Orion5 to prevent users from driving joints through each other or ground plane. The embedded processor will look ahead and apply negative acceleration to joints that are about to collide)_
+_(Embedded processor enables Orion5 to prevent users from driving joints through each other. However do not rely on this in your control loop as it enables emergency stop mode, requiring user intervention to resolve. See the user manual (https://goo.gl/h3i2br) for more details.)_
 
 #### To set the control mode for each joint
 The following constants are available in the Orion5.m library.
@@ -161,7 +164,7 @@ orion.setJointTorqueEnable(Orion5.BASE, 0)
 ```
 
 ### Known Issues & Future Work
-* If MATLAB code calling the library crashes, the *keep alive* ping will keep happening in the background. Users can stop this by running `<library_instance>.stop()` in MATLAB console. It would be best to surround your code with a try/catch structure.
+* If user MATLAB code calling the library crashes, the *keep alive* ping will keep happening in the background. Users can stop this by running `<library_instance>.stop()` in MATLAB console. It would be best to surround your code with a try/catch structure.
 * Most functionality is implemented, we are working on making a nicer interface for setting/getting positions in deg360, deg180 and radians.
 * We are considering adding the capability to alter the acceleration profile and torque settings etc from MATLAB.
 
@@ -179,19 +182,18 @@ The scrollbar controls are:
 * **Middle-top:** Rotation of arm
 * **Middle-bottom:** Tool-point radius
 * **Inner-right:** Tool attack distance (sets the point at which tool attack rotates about)
-* **Far-right:** Claw open/close (or tool rotation if another end-effector was attached)
+* **Far-right:** Claw open/close
 
 ### Dependencies:
 * Python 3.6
 * pip
-* wheel
 * pyserial
 * pyglet
 
 Install these dependencies with:
 
 ```
-pip3.6 install wheel, pyglet, pyserial
+pip3.6 install pyglet, pyserial
 ```
 
 ### Keyboard Controls:
