@@ -1,6 +1,9 @@
 # Orion5 Robotic Arm
 
-### Orion5 User Manual available here: https://goo.gl/h3i2br
+_Please read through the Quick Start Guide and watch the videos before using Orion5_
+### Orion5 Quick Start Guide: https://goo.gl/DQm3x3
+### Orion5 User Manual: https://goo.gl/h3i2br
+### Orion5 Tutorial Videos: https://goo.gl/5tkjUF
 
 ## MATLAB Library
 Libraries directory contains `Orion5.m`, this MATLAB library interfaces with a Python server that will need to be launched before using the MATLAB library.
