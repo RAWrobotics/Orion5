@@ -2,7 +2,7 @@ import socket
 import select
 import Orion5
 
-orion = Orion5.Orion5('COM4')
+orion = Orion5.Orion5('COM80')
 
 HOST = 'localhost'
 PORT = 42000
@@ -24,7 +24,7 @@ def tryConversion(data):
         print(data)
         print("Orion5_Server: ValueError in conversion")
         return None
-    return data
+    return value
 
 while True:
     print('waiting for connection')
@@ -66,6 +66,7 @@ while True:
                 except ValueError:
                     continue
                 
+                print(data)
                 if data_dict['id1'] == 'posFeedback':
                     conn.sendall(str(orion.getJointAngles()).encode())
                 elif data_dict['id1'] == 'velFeedback':
