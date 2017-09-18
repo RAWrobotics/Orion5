@@ -163,8 +163,12 @@ class SerialThread(threading.Thread):
                 if jointPTR.checkVariable(itemSETPTR[0], itemPTR[0]):
                     ID = jointPTR.getVariable('constants', 'ID')
                     value = jointPTR.getVariable(itemSETPTR[0], itemPTR[0])
+                    # convert to G15 angle if var is a position update
                     if itemPTR[0] == 'goalPosition':
                         value = Deg360ToG15Angle(value)
+                    # firmware workaround for time-to-goal mode
+                    if itemPTR[0] == 'desiredSpeed' and jointPTR.getVariable('control variables', 'controlMode') == ControlModes.TIME:
+                        value = (int(value * 10) & 0x1FFF) | 0x8000
                     self.processSend((ID, itemPTR[1], itemPTR[2], value, self._checker[0]))
                     jointPTR.TickVariable(itemSETPTR[0], itemPTR[0])
                     break
