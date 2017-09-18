@@ -14,6 +14,18 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((HOST, PORT))
 s.listen(1)
 
+def tryConversion(data):
+    try:
+        if '.' in data[3]:
+            value = float(data[3])
+        else:
+            value = int(data[3])
+    except ValueError:
+        print(data)
+        print("Orion5_Server: ValueError in conversion")
+        return None
+    return data
+
 while True:
     print('waiting for connection')
     s.settimeout(None)
@@ -69,16 +81,16 @@ while True:
                 elif data_dict['id1'] == 'enControl':
                     conn.sendall('r'.encode())
                     orion.setJointTorqueEnablesArray(eval(data[3]))
+                elif data_dict['id1'] == 'config':
+                    conn.sendall('r'.encode())
+                    value = tryConversion(data)
+                    if value == None:
+                        continue
+                    orion.setVariable(data_dict['id2'], value)
                 elif len(data) == 4:
                     conn.sendall('r'.encode())
-                    try:
-                        if '.' in data[3]:
-                            value = float(data[3])
-                        else:
-                            value = int(data[3])
-                    except ValueError:
-                        print(data)
-                        print("Orion5_Server: ValueError in conversion")
+                    value = tryConversion(data)
+                    if value == None:
                         continue
                     orion.joints[data_dict['jointID']].setVariable(data_dict['id1'], data_dict['id2'], value)
                 elif len(data) == 3:
