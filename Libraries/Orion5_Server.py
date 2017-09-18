@@ -66,7 +66,6 @@ while True:
                 except ValueError:
                     continue
                 
-                print(data)
                 if data_dict['id1'] == 'posFeedback':
                     conn.sendall(str(orion.getJointAngles()).encode())
                 elif data_dict['id1'] == 'velFeedback':
