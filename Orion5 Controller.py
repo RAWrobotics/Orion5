@@ -983,10 +983,11 @@ class Window(pyglet.window.Window):
                         self._armVARS[arm['id']][item[1]] += self._armConstants[2][item[1] + ' lims'][0]
                     else:
                         self._armVARS[arm['id']][item[1]] = self._armConstants[2][item[1] + ' lims'][2]
+
         try:
 
-            c_armVars = self.IKinematics(self.PythonArmVarsToC());
-            self.CArmVarsToPython(c_armVars);
+            c_armVars = self.IKinematics(self.PythonArmVarsToC())
+            self.CArmVarsToPython(c_armVars)
 
         except Exception as e:
             print(e)
@@ -1064,7 +1065,7 @@ class C_ArmVars(ctypes.Structure):
     for key in Window._armVARS[arm['id']]['Iter']:
         cType = ctypes.c_double
         if type(Window._armVARS[arm['id']][key]) == list:
-            cType = ctypes.POINTER(ctypes.c_double)
+            cType = ctypes.c_double * 3
         _fields_.append((key.replace(' ', ''), cType))
 
 def Main():
@@ -1073,8 +1074,6 @@ def Main():
     print(comObj)
     try:
         arm['coms'][arm['id']] = str(comObj.device)
-        #if comObj != None:
-        print(comObj.device, comObj.name, comObj.vid, comObj.pid)
     except:
         pass
 
