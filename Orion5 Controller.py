@@ -244,7 +244,7 @@ class Window(pyglet.window.Window):
         # select libExtension based on platform
         libExtension = '.dll' # windows as default
         if sys.platform == 'darwin':
-            libName = '.dylib' # Mac OS
+            libExtension = '.dylib' # Mac OS
         elif 'linux' in sys.platform:
             libExtension = '.so'# linux based
         # load functions from C dynamic library
