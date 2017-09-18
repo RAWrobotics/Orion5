@@ -17,5 +17,7 @@ orion.setJointPosition(Orion5.BASE, 180);
 pause(2);
 orion.setJointPosition(Orion5.BASE, 270);
 pause(2);
+orion.setJointPosition(Orion5.BASE, 0);
+pause(2);
 
 orion.stop();

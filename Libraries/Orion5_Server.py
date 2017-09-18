@@ -1,8 +1,15 @@
 import socket
 import select
 import Orion5
+from General import ComQuery
 
-orion = Orion5.Orion5('COM80')
+comport = ComQuery()
+print(comport)
+if comport is None:
+    print('Unable to find Orion5')
+    quit()
+
+orion = Orion5.Orion5(comport.device)
 
 HOST = 'localhost'
 PORT = 42000
