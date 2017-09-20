@@ -22,10 +22,8 @@ def PopulateModels(fileSets, scaler = 1):
         for iterator2 in range(len(fileSets[iterator1])):
             try:
                 Models = STLRead(Models, fileSets[iterator1][iterator2], iterator1, int(fileSets[iterator1][iterator2][7:10]), scaler)
-                print('yolo')
             except:
                 Models = STLRead(Models, fileSets[iterator1][iterator2], iterator1, 1, scaler)
-                print('swag')
     return Models
 
 def PolyRead(fileName, scaler = 1):

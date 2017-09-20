@@ -544,9 +544,6 @@ class Window(pyglet.window.Window):
             if ((abs((x - self._controlState[8][0] / 2) * self._windowConstants[2] - self._windowConstants[4][2][iterator1][0]) < (self._windowConstants[0] / 2)*self._windowConstants[2])
                 and (abs((y - self._controlState[8][1] / 2) * self._windowConstants[2] - self._windowConstants[4][2][iterator1][1]) < (self._windowConstants[0] / 2)*self._windowConstants[2])):
                 self._controlState[1] = iterator1 + 1
-                '''
-                if self._controlState[1] != 0:
-                    print(self._controlState[1])'''
         self._controlState[10][0] = x
         self._controlState[10][1] = y
 
@@ -573,20 +570,16 @@ class Window(pyglet.window.Window):
             if len(self._sequence[0][0]) != 0:
                 #Show entry toggle
                 self._controlState[5] = not self._controlState[5]
-                #print(self._sequence[0][0]Iterator, self._sequence[0][0][self._sequence[1]])
         elif symbol == key.W:
             if len(self._sequence[0][0]) != 0:
                 self._sequence[1] -= 1
             if self._sequence[1] < -1:
                 self._sequence[1] = len(self._sequence[0][0])-2
-            #print(self._sequence[1], self._sequence[0][0][self._sequence[1]])
         elif symbol == key.S:
             if len(self._sequence[0][0]) != 0:
-                print(self._sequence[1])
                 self._sequence[1] += 1
             if self._sequence[1] > len(self._sequence[0][0])-2:
                 self._sequence[1] = -1
-            #print(self._sequence[1], self._sequence[0][0][self._sequence[1]])
         elif symbol == key.D:
             # record entry
             for iterator1 in range(len(self._sequence[0])):
@@ -596,7 +589,6 @@ class Window(pyglet.window.Window):
                                                      ['Wrist', copy.copy(self._armVARS[iterator1]['Wrist'])],
                                                      ['Claw', copy.copy(self._armVARS[iterator1]['Claw'])],
                                                      [0,2]])
-                print(self._sequence[0])
         elif symbol == key.Z:
             if len(self._sequence[0][0]) != 0:
                 #run sequence toggle
@@ -605,18 +597,14 @@ class Window(pyglet.window.Window):
                     self._controlState[5] = True
         elif symbol == key.X:
             temp = SaveLoadSequence()
-            print(temp)
             if type(temp[0]) == bool and not temp[0]:
-                print('yolo0')
                 ID = ''
                 entry = ''
                 entryList = []
                 self._sequence[0] = []
                 for iter1 in range(len(arm['arms'])):
                     self._sequence[0].append([])
-                print('yolo1')
                 filePipe = open(SEQUENCEFOLDER + temp[1], 'r')
-                print('yolo2')
                 while True:
                     entryList = []
                     entry = filePipe.readline()
@@ -627,8 +615,6 @@ class Window(pyglet.window.Window):
                         iter1 = 0
                         while True:
                             entryList = []
-                            print('yes', len(entry))
-                            print(iter1, entry)
                             if len(entry) < 5:
                                 break
                             for iterator in range(5):
@@ -641,7 +627,6 @@ class Window(pyglet.window.Window):
                             entry = entry[entry.find(' ') + 1:]
                             self._sequence[0][iter1].append(entryList)
                             iter1 += 1
-                print(len(self._sequence[0]))
                 for item in self._sequence[0]:
                     print(item)
             elif type(temp[0]) == bool and temp[0]:
@@ -654,7 +639,6 @@ class Window(pyglet.window.Window):
                                     filePipe.write(item[0] + ' ' + str(item[1]) + ' ')
                                 else:
                                     filePipe.write('TimeDelay ' + str(item[1]) + ' ')
-                                print(iterator1, iterator2)
                         filePipe.write('\n')
                     filePipe.close()
         elif symbol == key.ESCAPE:
@@ -677,11 +661,10 @@ class Window(pyglet.window.Window):
                     print(arm['coms'][iterator])
                 except:
                     pass
-            for iterator1 in range(len(arm)):
+            for iterator1 in range(len(arm['arms'])):
                 arm['arms'][iterator1]['arm'].exit()
                 arm['arms'][iterator1]['arm'] = Orion5.Orion5(arm['coms'][iterator1])
         elif symbol == key.F:
-            print(arm)
             arm['coms'].append(str(ComQuery().device))
             if len(seeder) > len(arm['arms'])-1:
                 arm['arms'].append(newARM(seeder[len(arm['arms'])-1]))
@@ -737,7 +720,6 @@ class Window(pyglet.window.Window):
                 self.on_text_motion(item1[3])
                 self.on_text_motion(item1[4])
             arm['id'] = temp
-            print(arm)
         elif symbol == key.V:
             temp = newARM({'Trans':arm['arms'][arm['id']]['Trans'], 'Rot':arm['arms'][arm['id']]['Rot']})
             arm['arms'][arm['id']]['Trans'] = temp['Trans']
@@ -755,7 +737,6 @@ class Window(pyglet.window.Window):
                 self._armVARS[iterator1]['Claw'] = arm['arms'][iterator1]['arm'].claw.getPosition()
         elif self._controlState[5]:
             for iterator1 in range(len(self._sequence[0])):
-                print(iterator1)
                 self._armVARS[iterator1]['Turret'] = copy.copy(self._sequence[0][iterator1][self._sequence[1]][0][1])
                 self._armVARS[iterator1]['Shoulder'] = copy.copy(self._sequence[0][iterator1][self._sequence[1]][1][1])
                 self._armVARS[iterator1]['Elbow'] = copy.copy(self._sequence[0][iterator1][self._sequence[1]][2][1])
@@ -989,7 +970,6 @@ class Window(pyglet.window.Window):
             self.CArmVarsToPython(c_armVars);
 
         except Exception as e:
-            print(e)
             for item in self._armVARS[arm['id']]['Iter']:
                 if ((type(self._armVARS[arm['id']]['OLD'][item]) == float) or (type(self._armVARS[arm['id']]['OLD'][item]) == int)):
                     self._armVARS[arm['id']][item] = 0.0 + self._armVARS[arm['id']]['OLD'][item]
@@ -1077,7 +1057,6 @@ def Main():
         print(comObj.device, comObj.name, comObj.vid, comObj.pid)
     except:
         pass
-
     import pyglet
     global ORION5
     ORION5 = Window(WINDOW[0], WINDOW[1], 'Orion5 Visualiser and Controller')
