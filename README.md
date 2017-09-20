@@ -133,7 +133,7 @@ elbow_speed = orion.getJointSpeed(Orion5.ELBOW)
 #### Read a joint load
 This will return the load for a single joint - represented as a 10 bit number. Read above for more information.
 ```matlab
-shoulder_pos = orion.getJointPosition(Orion5.SHOULDER)
+shoulder_pos = orion.getJointLoad(Orion5.WRIST)
 ```
 
 #### Set a joint position
@@ -164,6 +164,29 @@ orion.setJointTorqueEnable(Orion5.WRIST, 1)
 
 % turn off
 orion.setJointTorqueEnable(Orion5.BASE, 0)
+```
+
+### Configuration Values
+There are several configuration values that are writable from user software. These variables are stored in volatile memory, so remember to set these each time you power cycle Orion5. Offsets can be used to correct any missaligned joints, such as the shoulder or base. 
+
+**Offset angles are integers in units of 0-1087, which corresponds to the range 0-359**
+```matlab
+angle1087 = int32(angle360 * 1088.0 / 360.0)
+```
+
+Configuration values include:
+* **baseOffset:** Offset angle added to base angle in embedded firmware, default is 0.
+* **shoulderOffset:** Offset angle added to shoulder angle in embedded firmware, default is 0.
+* **elbowOffset:** Offset angle added to elbow angle in embedded firmware, default is 0.
+* **wristOffset:** Offset angle added to wrist angle in embedded firmware, default is 0.
+* **clawOffset:** Offset angle added to claw angle in embedded firmware, default is 0.
+* **clawLoadLimit:** Value between 0-1023, claw won't move if load exceeds this, default is 180.
+* **fieldInflation:** This value inflates the protection fields of each joint, default is 3mm.
+* **clawHomePos:** This value sets the position that claws move to when Claw Home Button is used, default is 120.
+
+**To change one of these configuration values**
+```matlab
+orion.setConfigValue('clawLoadLimit', 250);
 ```
 
 ### Known Issues & Future Work
