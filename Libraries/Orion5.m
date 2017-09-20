@@ -50,6 +50,7 @@ classdef Orion5 < handle
             disp('Orion5: Cleaning up.');
             if isa(obj.tmr, 'timer')
                 stop(obj.tmr);
+                pause(2);
                 delete(obj.tmr);
             end
             if isa(obj.socket, 'tcpip')
@@ -59,14 +60,7 @@ classdef Orion5 < handle
         end
         
         function delete(obj)
-            if isa(obj.tmr, 'timer')
-                stop(obj.tmr);
-                delete(obj.tmr);
-            end
-            if isa(obj.socket, 'tcpip')
-                fwrite(obj.socket, 'q');
-                fclose(obj.socket);
-            end
+
         end
         
         %% Setters
@@ -109,7 +103,7 @@ classdef Orion5 < handle
             if ~(obj.controlModes(jointID+1) == obj.POS_TIME)
                 error('Orion5: Control mode must be set to POS_TIME to use setJointTimeToPosiion');
             end
-        	obj.setVar(jointID, 'control variables', 'desiredSpeed', int32(seconds * 10));
+        	obj.setVar(jointID, 'control variables', 'desiredSpeed', seconds);
         end
         
         function setJointControlMode(obj, jointID, controlMode)
@@ -125,6 +119,10 @@ classdef Orion5 < handle
         function setJointTorqueEnable(obj, jointID, enable)
             enable = ~~enable;
             obj.setVar(jointID, 'control variables', 'enable', enable);
+        end
+
+        function setConfigValue(obj, name, value)
+        	obj.setVar(0, 'config', name, value);
         end
         
         %% Getters

@@ -1,8 +1,15 @@
 import socket
 import select
 import Orion5
+from General import ComQuery
 
-orion = Orion5.Orion5('COM4')
+comport = ComQuery()
+print(comport)
+if comport is None:
+    print('Unable to find Orion5')
+    quit()
+
+orion = Orion5.Orion5(comport.device)
 
 HOST = 'localhost'
 PORT = 42000
@@ -13,6 +20,18 @@ timeouts = 0
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((HOST, PORT))
 s.listen(1)
+
+def tryConversion(data):
+    try:
+        if '.' in data[3]:
+            value = float(data[3])
+        else:
+            value = int(data[3])
+    except ValueError:
+        print(data)
+        print("Orion5_Server: ValueError in conversion")
+        return None
+    return value
 
 while True:
     print('waiting for connection')
@@ -69,16 +88,16 @@ while True:
                 elif data_dict['id1'] == 'enControl':
                     conn.sendall('r'.encode())
                     orion.setJointTorqueEnablesArray(eval(data[3]))
+                elif data_dict['id1'] == 'config':
+                    conn.sendall('r'.encode())
+                    value = tryConversion(data)
+                    if value == None:
+                        continue
+                    orion.setVariable(data_dict['id2'], value)
                 elif len(data) == 4:
                     conn.sendall('r'.encode())
-                    try:
-                        if '.' in data[3]:
-                            value = float(data[3])
-                        else:
-                            value = int(data[3])
-                    except ValueError:
-                        print(data)
-                        print("Orion5_Server: ValueError in conversion")
+                    value = tryConversion(data)
+                    if value == None:
                         continue
                     orion.joints[data_dict['jointID']].setVariable(data_dict['id1'], data_dict['id2'], value)
                 elif len(data) == 3:
