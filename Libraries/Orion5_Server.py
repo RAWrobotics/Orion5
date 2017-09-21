@@ -4,6 +4,18 @@ import select
 import Orion5
 from General import ComQuery
 
+def tryConversion(data):
+    try:
+        if '.' in data[3]:
+            value = float(data[3])
+        else:
+            value = int(data[3])
+    except ValueError:
+        print(data)
+        print("Orion5_Server: ValueError in conversion 1")
+        return None
+    return value
+
 comport = None
 print('\nSearching for Orion5...')
 try:
@@ -17,8 +29,6 @@ except KeyboardInterrupt:
     print('\nExiting...\n')
     quit()
 
-orion = Orion5.Orion5(comport.device)
-
 HOST = 'localhost'
 PORT = 42000
 
@@ -30,20 +40,13 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((HOST, PORT))
 s.listen(1)
 
-def tryConversion(data):
-    try:
-        if '.' in data[3]:
-            value = float(data[3])
-        else:
-            value = int(data[3])
-    except ValueError:
-        print(data)
-        print("Orion5_Server: ValueError in conversion 1")
-        return None
-    return value
+orion = Orion5.Orion5(comport.device)
+
+print('\nIf MATLAB code crashes, call the orion.stop() function in MATLAB console.')
 
 while running:
     print('\nWaiting for MATLAB')
+
     s.settimeout(None)
     conn, addr = s.accept()
     s.settimeout(0)
@@ -120,6 +123,8 @@ while running:
         print('\nExiting...\n')
     finally:
         conn.close()
+        if running:
+            print('Disconnected from MATLAB')
 
 s.close()
 orion.exit()
