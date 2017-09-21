@@ -117,10 +117,11 @@ class SerialThread(threading.Thread):
                                       baudrate=SERIAL_BAUD_RATE,
                                       write_timeout=0,
                                       timeout=SERIAL_TIMEOUT)
-        except serial.SerialException:
+        except Exception as e:
+            print(e)
             debug("SerialThread: Unable to find serial device")
             debug("SerialThread: Thread will immediately exit")
-            self.stop()
+            arm.exit()
 
     def run(self):
         if self.uart is None:

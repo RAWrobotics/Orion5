@@ -26,6 +26,8 @@ classdef Orion5 < handle
     methods
         %% Constructor
         function obj = Orion5()
+            warning off backtrace
+            disp('Orion5: Starting')
             oldTimer = timerfind('Name', 'Orion5KeepAlive');
             if ~isempty(oldTimer)
                 stop(oldTimer);
@@ -36,26 +38,35 @@ classdef Orion5 < handle
                 fopen(obj.socket);
             catch e
                 obj.socket = 0;
-                error(strcat('Orion5: Unable to open socket: '), e);
+                error('Orion5: Unable to open socket: is Orion5_Server.py running and waiting for MATLAB?');
             end
             
             obj.tmr = timer('Period', 1, 'Name', 'Orion5KeepAlive', 'ExecutionMode', 'fixedSpacing', 'TimerFcn', @obj.keepAliveFcn);
             start(obj.tmr);
             
             pause(3);
+            disp('Orion5: Ready')
         end
         
         %% Cleanup Functions
         function stop(obj)
-            disp('Orion5: Cleaning up.');
-            if isa(obj.tmr, 'timer')
-                stop(obj.tmr);
-                pause(2);
-                delete(obj.tmr);
+            tClean = isa(obj.tmr, 'timer');
+            sClean = isa(obj.socket, 'tcpip');
+            if (~tClean && ~sClean)
+                warning('Orion5: Already stopped');
+            else
+                disp('Orion5: Stopping');
             end
-            if isa(obj.socket, 'tcpip')
+            if tClean
+                stop(obj.tmr);
+                pause(1.1);
+                obj.tmr = 0;
+            end
+            if sClean
                 fwrite(obj.socket, 'q');
+                pause(1);
                 fclose(obj.socket);
+                obj.socket = 0;
             end
         end
         
@@ -164,7 +175,7 @@ classdef Orion5 < handle
     methods (Access = 'private')
         function setVar(obj, jointID, id1, id2, value)
             if ~isa(obj.socket, 'tcpip')
-                error('Orion5: Socket not opened yet');
+                error('Orion5: Socket not open.');
             end
             
             if strcmp(id1, 'posControl')
@@ -198,7 +209,7 @@ classdef Orion5 < handle
         
         function var = getVar(obj, jointID, id1, id2)
             if ~isa(obj.socket, 'tcpip')
-                error('Orion5: Socket not opened yet');
+                error('Orion5: Socket not open.');
             end
             
             jointID = num2str(jointID);
