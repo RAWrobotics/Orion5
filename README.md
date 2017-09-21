@@ -5,12 +5,23 @@ _Please read through the Quick Start Guide and watch the videos before using Ori
 ### Orion5 User Manual: https://goo.gl/h3i2br
 ### Orion5 Tutorial Videos: https://goo.gl/5tkjUF
 
+## Install Dependencies
+_Follow these steps before attempting to use the Python or MATLAB libraries, or the Visualiser_
+1. Install python 3.6.2 on your machine: https://www.python.org/downloads/
+2. Windows users: Make sure to select the "Add python to environment variables" option while installing.
+3. Install dependencies for libraries using `pip3 install pyserial pyglet`.
+4. If the pip3 command is not found, navigate to your Python install directory, on Windows this is usually `C:\Users\<username>\AppData\Local\Programs\Python\Python36-32`, enter the `Scripts` directory and launch a Powershell window using `Shift + RightClick`, and then try `./pip3 install pyserial pyglet`.
+
 ## MATLAB Library
-Libraries directory contains `Orion5.m`, this MATLAB library interfaces with a Python server that will need to be launched before using the MATLAB library.
-1. Ensure your machine has python3.6 installed.
-2. Install dependencies for Python server using `pip3 install pyserial`.
-3. Launch the Python server using `python3 Orion5_Server.py`.
-4. Now when the `Orion5.m` class is used in MATLAB it will interface with Python.
+_In order to use the MATLAB library, the `Orion5_Server.py` Python program is required to run in the background; it acts as an interface between MATLAB and the Orion5 Robotic Arm_
+### Python Server
+1. The program `Orion5_Server.py` is required to be running in the background to use the MATLAB library.
+2. If the 'Install Dependencies' steps above have been completed, launch the `Orion5_Server.py` program by double clicking it or by running `python3 Orion5_Server.py` in the Libraries directory.
+3. The serial port name of the Orion5 robotic arm should be printed in the terminal if found, otherwise the program will keep waiting until it is able to find one. Press `Ctrl+C` to exit the program.
+4. The message `Waiting for MATLAB` means the program is ready to communicate with MATLAB.
+5. The message `Connected to MATLAB` means your MATLAB script is currently running and communicating with the `Orion5_Server.py`.
+6. If your MATLAB script crashes midway or does not call the `<library_reference>.stop()` function correctly upon completion, a socket may be kept open from MATLAB to `Orion5_Server.py`. This may appear as an `OS Error` in python, or a `socket error` in MATLAB next time you run your script. Simply call the `<library_reference>.stop()` function in the MATLAB console to cleanly exit the Orion5.m library.
+7. Press `Ctrl+C` to quit the server cleanly.
 
 ### Basic Usage 
 The library pings the Python server every second if no other library functions are being called, this is like a watchdog timer, if Python server doesn't hear anything for 5 seconds, it will return to waiting for a new connection.  
@@ -194,7 +205,7 @@ orion.setConfigValue('clawLoadLimit', 250);
 * Most functionality is implemented, we are working on making a nicer interface for setting/getting positions in deg360, deg180 and radians.
 * We are considering adding the capability to alter the acceleration profile and torque settings etc from MATLAB.
 
-## Python Visualiser Controller
+## Python 3d Visualiser Controller
 The `Orion5 Controller.py` program is a 3d controller and visualiser made in Python; it implements OpenGL for graphics rendering.
 The visualiser is designed as an aid to understand the 5 degrees of freedom of Orion5, and also as a way to control the robotic arm visually.
 
@@ -223,6 +234,8 @@ pip3.6 install pyglet, pyserial
 ```
 
 ### Keyboard Controls:
+* A - toggle - Put the visualiser into "Arm controls 3d model" mode
+* Q - toggle - Put the visualiser into "3d model controls arm" mode
 * Right - Extends tool point
 * Left - Retracts tool point
 * Up - Tool point up
@@ -237,8 +250,6 @@ pip3.6 install pyglet, pyserial
 * CTRL_Right - Slew right
 * CTRL_END - Read from arm
 * CTRL_HOME - Write to arm
-* A - toggle - Put the visualiser into "Arm controls model" mode
-* Q - toggle - Put the visualiser into "Model controls arm" mode
 
 ### Mouse Controls
 * Left click drag: Rotates model by X/Y axis
@@ -251,6 +262,4 @@ pip3.6 install pyglet, pyserial
 * E - Force current position to be current sequence element
 * S - cycle sequence toward the end (wraps)
 * W - Cycle sequence toward the start (wraps)
-* C - Save current sequence set to the txt file in the sequence folder TODOs here
-* X - Read the sequence in the sequence.txt in the sequence folder TODOs here
-* Z - Play sequence currently loaded... Major TODOs as it relies as it needs the joint to get within X of angle to tick the sequence as having been reached
+* Z - Play sequence currently loaded
