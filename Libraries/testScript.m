@@ -4,13 +4,11 @@ orion = Orion5();
 
 orion.setAllJointsTorqueEnable([1 0 0 0 0]);
 
-for id=Orion5.BASE:Orion5.CLAW
-    orion.setJointControlMode(id, Orion5.POS_TIME);
-    orion.setJointTimeToPosition(id, 1.5); % 1.5 seconds
-end
+orion.setJointControlMode(Orion5.BASE, Orion5.POS_SPEED);
+orion.setJointSpeed(Orion5.BASE, 120);
 
 orion.setJointPosition(Orion5.BASE, 0);
-pause(2);
+pause(4);
 orion.setJointPosition(Orion5.BASE, 90);
 pause(2);
 orion.setJointPosition(Orion5.BASE, 180);
