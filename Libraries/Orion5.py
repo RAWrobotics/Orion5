@@ -121,7 +121,7 @@ class SerialThread(threading.Thread):
             print(e)
             debug("SerialThread: Unable to find serial device")
             debug("SerialThread: Thread will immediately exit")
-            arm.exit()
+            self.arm.exit()
 
     def run(self):
         if self.uart is None:
