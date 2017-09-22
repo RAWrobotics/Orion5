@@ -43,7 +43,7 @@ CONTROLSCALER = 0.097
 CONTROLSIZE = ZONEWIDTH*CONTROLSCALER
 
 seeder = [{'Trans': {'x': 0, 'y': -700, 'z': 0}, 'Rot': {'x': 0, 'y': 0, 'z': 180}}]
-arm = {'id':0, 'coms':['COM8'], 'arms':[{'arm':None, 'Trans':{'x':0, 'y':0, 'z':0}, 'Rot':{'x':0, 'y':0, 'z':0}}]} #arm['arms'][arm['id']]['arm'].
+arm = {'id':0, 'coms':['None'], 'arms':[{'arm':None, 'Trans':{'x':0, 'y':0, 'z':0}, 'Rot':{'x':0, 'y':0, 'z':0}}]} #arm['arms'][arm['id']]['arm'].
 ORION5 = None
 SEQUENCEFOLDER = './Sequences/'
 SEQUENCEBASENAME = 'Sequence'
@@ -241,18 +241,28 @@ class Window(pyglet.window.Window):
 
         global arm
         pyglet.window.Window.__init__(self, width, height, title, resizable=True, style = pyglet.window.Window.WINDOW_STYLE_DEFAULT )
-        # select libExtension based on platform
-        libExtension = '.dll' # windows as default
-        if sys.platform == 'darwin':
-            libExtension = '.dylib' # Mac OS
+
+        # select appropriate shared lib based on platform
+        libExtension = ''
+        if 'darwin' in sys.platform:
+        	# Mac OS
+            libExtension = '.dylib'
         elif 'linux' in sys.platform:
-            libExtension = '.so'# linux based
+        	# linux 
+            libExtension = '.so'
+        else:
+        	# windows
+        	libExtension = '.dll'
+        	if '64 bit' in sys.version:
+        		libExtension = '64' + libExtension
+
         # load functions from C dynamic library
         clib = ctypes.cdll.LoadLibrary('Libraries/libOrion5Kinematics' + libExtension)
         self.IKinematics = clib.IKinematics
         self.IKinematics.restype = C_ArmVars
         self.CollisionCheck = clib.CollisionCheck
         self.CollisionCheck.restype = ctypes.c_int
+
         self._controlState[8] = [WINDOW[0], WINDOW[1]]
         self.set_minimum_size(self._controlState[8][0], self._controlState[8][1])
         self._controlState[9] = [['Claw', [self._controlState[8][0] - self._windowConstants[0],
