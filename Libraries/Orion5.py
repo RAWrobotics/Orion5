@@ -118,12 +118,10 @@ class SerialThread(threading.Thread):
                                       write_timeout=0,
                                       timeout=SERIAL_TIMEOUT)
         except Exception as e:
-            if serialName != 'None':
-                print('Orion5.py: __init__:', e)
-            print("SerialThread: Unable to find serial device")
+            print(e)
             debug("SerialThread: Unable to find serial device")
             debug("SerialThread: Thread will immediately exit")
-            self.stop()
+            self.arm.exit()
 
     def run(self):
         if self.uart is None:
