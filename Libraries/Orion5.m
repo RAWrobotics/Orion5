@@ -37,8 +37,14 @@ classdef Orion5 < handle
                 obj.socket = tcpip('127.0.0.1', 42000, 'NetworkRole', 'client', 'Timeout', 2.5);
                 fopen(obj.socket);
             catch e
+%                 switch e.identifier
+%                     case 'MATLAB:UndefinedFunction'
+%                         warning('Orion5: Please install Instrument Control Toolbox');
+%                         rethrow(e);
+%                     otherwise
+                         error('Orion5: Unable to open socket: is Orion5_Server.py running and waiting for MATLAB?');
+%                 end
                 obj.socket = 0;
-                error('Orion5: Unable to open socket: is Orion5_Server.py running and waiting for MATLAB?');
             end
             
             obj.tmr = timer('Period', 1, 'Name', 'Orion5KeepAlive', 'ExecutionMode', 'fixedSpacing', 'TimerFcn', @obj.keepAliveFcn);
