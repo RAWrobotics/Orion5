@@ -77,33 +77,43 @@ class SerialThread(threading.Thread):
     '''
     def __init__(self, orion5_reference, serialName):
         threading.Thread.__init__(self)
-        self._outboxIterator = [['misc variables', [['cwAngleLimit', JointVars.CW_LIMIT, 2],
-                                                    ['ccwAngleLimit', JointVars.CCW_LIMIT, 2],
-                                                    ['cwMargin', JointVars.CW_MARGIN, 1],
-                                                    ['cwwMargin', JointVars.CCW_MARGIN, 1],
-                                                    ['cwSlope', JointVars.CW_SLOPE, 1],
-                                                    ['cwwSlope', JointVars.CCW_SLOPE, 1],
-                                                    ['punch', JointVars.PUNCH, 2]]],
-                               ['control variables', [['enable', JointVars.TORQUE_ENABLE, 1],
-                                                      ['goalPosition', JointVars.GOAL_POS, 2],
-                                                      ['desiredSpeed', JointVars.SPEED, 2],
-                                                      ['controlMode', JointVars.MODE, 1]]]]
+        self._outboxIterator = [
+            [
+                'misc variables', [
+                    ['cwAngleLimit', JointVars.CW_LIMIT, 2],
+                    ['ccwAngleLimit', JointVars.CCW_LIMIT, 2],
+                    ['cwMargin', JointVars.CW_MARGIN, 1],
+                    ['cwwMargin', JointVars.CCW_MARGIN, 1],
+                    ['cwSlope', JointVars.CW_SLOPE, 1],
+                    ['cwwSlope', JointVars.CCW_SLOPE, 1],
+                    ['punch', JointVars.PUNCH, 2]
+                ]
+            ],
+            [
+                'control variables', [
+                    ['enable', JointVars.TORQUE_ENABLE, 1],
+                    ['goalPosition', JointVars.GOAL_POS, 2],
+                    ['desiredSpeed', JointVars.SPEED, 2],
+                    ['controlMode', JointVars.MODE, 1]
+                ]
+            ]
+        ]
         self._globalConstIterator = [
-                                        ['baseOffset', GlobalConstants.BASE_OFFSET],
-                                        ['shoulderOffset', GlobalConstants.SHOULDER_OFFSET],
-                                        ['elbowOffset', GlobalConstants.ELBOW_OFFSET],
-                                        ['wristOffset', GlobalConstants.WRIST_OFFSET],
-                                        ['clawOffset', GlobalConstants.CLAW_OFFSET],
-                                        ['baseDirection', GlobalConstants.BASE_DIRECTION],
-                                        ['shoulderDirection', GlobalConstants.SHOULDER_DIRECTION],
-                                        ['elbowDirection', GlobalConstants.ELBOW_DIRECTION],
-                                        ['wristDirection', GlobalConstants.WRIST_DIRECTION],
-                                        ['clawDirection', GlobalConstants.CLAW_DIRECTION],
-                                        ['clawLoadLimit', GlobalConstants.CLAW_LOAD_LIMIT],
-                                        ['fieldInflation', GlobalConstants.FIELD_INFLATION],
-                                        ['clawHomePos', GlobalConstants.CLAW_HOME_POS],
-                                        ['mode', GlobalConstants.CLAW_HOME_POS]
-                                    ]
+            ['baseOffset', GlobalConstants.BASE_OFFSET],
+            ['shoulderOffset', GlobalConstants.SHOULDER_OFFSET],
+            ['elbowOffset', GlobalConstants.ELBOW_OFFSET],
+            ['wristOffset', GlobalConstants.WRIST_OFFSET],
+            ['clawOffset', GlobalConstants.CLAW_OFFSET],
+            ['baseDirection', GlobalConstants.BASE_DIRECTION],
+            ['shoulderDirection', GlobalConstants.SHOULDER_DIRECTION],
+            ['elbowDirection', GlobalConstants.ELBOW_DIRECTION],
+            ['wristDirection', GlobalConstants.WRIST_DIRECTION],
+            ['clawDirection', GlobalConstants.CLAW_DIRECTION],
+            ['clawLoadLimit', GlobalConstants.CLAW_LOAD_LIMIT],
+            ['fieldInflation', GlobalConstants.FIELD_INFLATION],
+            ['clawHomePos', GlobalConstants.CLAW_HOME_POS],
+            ['mode', GlobalConstants.CLAW_HOME_POS]
+        ]
 
         self._iter = [0, 0, 0]
         self.arm = orion5_reference 
@@ -113,10 +123,12 @@ class SerialThread(threading.Thread):
         self._requestFeedback = 1
         self._checker = [2, 0, 0, 0]
         try:
-            self.uart = serial.Serial(port=serialName,
-                                      baudrate=SERIAL_BAUD_RATE,
-                                      write_timeout=0,
-                                      timeout=SERIAL_TIMEOUT)
+            self.uart = serial.Serial(
+                port=serialName,
+                baudrate=SERIAL_BAUD_RATE,
+                write_timeout=0,
+                timeout=SERIAL_TIMEOUT
+            )
         except Exception as e:
             print(e)
             debug("SerialThread: Unable to find serial device")
@@ -339,23 +351,33 @@ class SerialThread(threading.Thread):
 class Joint(object):
     def __init__(self, name, ID, cwAngleLimit, ccwAngleLimit, margin, slope, punch, speed, mode):
         self._jointLock = threading.Lock()
-        self._datam = {'constants':{'ID':[ID, 1],
-                                    'name':[name, 1]},
-                       'misc variables':{'cwAngleLimit':[cwAngleLimit, 1],
-                                         'ccwAngleLimit':[ccwAngleLimit, 1],
-                                         'cwMargin':[margin, 1],
-                                         'cwwMargin':[margin, 1],
-                                         'cwSlope':[slope, 1],
-                                         'cwwSlope':[slope, 1],
-                                         'punch':[punch, 1],
-                                         'error':[None, 0]},
-                       'control variables':{'enable':[0, 1],
-                                            'goalPosition':[None, 0],
-                                            'desiredSpeed':[speed, 1],
-                                            'controlMode':[mode, 1]},
-                       'feedback variables':{'currentPosition':[None, 0],
-                                             'currentVelocity':[None, 0],
-                                             'currentLoad':[None, 0]}}
+        self._datam = {
+            'constants': {
+                'ID': [ID, 1],
+                'name': [name, 1]
+            },
+            'misc variables': {
+                'cwAngleLimit': [cwAngleLimit, 1],
+                'ccwAngleLimit': [ccwAngleLimit, 1],
+                'cwMargin': [margin, 1],
+                'cwwMargin': [margin, 1],
+                'cwSlope': [slope, 1],
+                'cwwSlope': [slope, 1],
+                'punch': [punch, 1],
+                'error': [None, 0]
+            },
+            'control variables': {
+                'enable': [0, 1],
+                'goalPosition': [None, 0],
+                'desiredSpeed': [speed, 1],
+                'controlMode': [mode, 1]
+            },
+            'feedback variables': {
+                'currentPosition': [None, 0],
+                'currentVelocity': [None, 0],
+                'currentLoad': [None, 0]
+            }
+        }
 
     def setVariable(self, id1, id2, datum):
         self._jointLock.acquire()
@@ -431,7 +453,7 @@ class Orion5(object):
                                     'elbowDirection':    [1, 1],
                                     'wristDirection':    [-1, 1],
                                     'clawDirection':     [1, 1],
-                                    'clawLoadLimit':     [180, 1],
+                                    'clawLoadLimit':     [200, 1],
                                     'fieldInflation':    [5, 1],
                                     'clawHomePos':       [362, 1],
                                     'mode':              [0, 0]
