@@ -42,7 +42,7 @@ try:
 
     gotoPositionBlocking(135.0)
 
-    input('\nPosition claws now - press enter when ready')
+    input('\nPosition claws around pinion gear\n80mm between inner faces\n40mm from centre of gear to claw face\npress enter when ready')
 
     gotoPositionBlocking(355.0)
 
