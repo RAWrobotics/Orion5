@@ -1,8 +1,9 @@
 import time
 import socket
 import select
-import Orion5
-from General import ComQuery
+
+import orion5
+from orion5.utils.general import waitForOrion5Forever
 
 def tryConversion(data):
     try:
@@ -16,18 +17,9 @@ def tryConversion(data):
         return None
     return value
 
-comport = None
 print('\nSearching for Orion5...')
-try:
-    while True:
-        comport = ComQuery()
-        if comport is not None:
-            print('Found Orion5, serial port name:', comport.device)
-            break
-        time.sleep(2)
-except KeyboardInterrupt:
-    print('\nExiting...\n')
-    quit()
+comport = waitForOrion5Forever()
+print('Found Orion5, serial port name:', comport)
 
 HOST = 'localhost'
 PORT = 42000
@@ -40,7 +32,7 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((HOST, PORT))
 s.listen(1)
 
-orion = Orion5.Orion5(comport.device)
+orion = orion5.Orion5(comport)
 
 print('\nIf MATLAB code crashes, call the orion.stop() function in MATLAB console.')
 
@@ -62,7 +54,7 @@ while running:
 
             if ready[0]:
                 data = conn.recv(1024).decode()
-            
+
             if not data or len(data) == 0 or not ready[0]:
                 timeouts += 1
                 if timeouts > max_timeouts:
@@ -87,22 +79,22 @@ while running:
                         print(data)
                         print("Orion5_Server: ValueError in conversion 2")
                         continue
-                    
+
                     if data_dict['id1'] == 'posFeedback':
-                        conn.sendall(str(orion.getJointAngles()).encode())
+                        conn.sendall(str(orion.getAllJointsPosition()).encode())
                     elif data_dict['id1'] == 'velFeedback':
-                        conn.sendall(str(orion.getJointSpeeds()).encode())
+                        conn.sendall(str(orion.getAllJointsSpeed()).encode())
                     elif data_dict['id1'] == 'torFeedback':
-                        conn.sendall(str(orion.getJointLoads()).encode())
+                        conn.sendall(str(orion.getAllJointsLoad()).encode())
                     elif data_dict['id1'] == 'posControl':
                         conn.sendall('r'.encode())
-                        orion.setJointAnglesArray(eval(data[3]))
+                        orion.setAllJointsPosition(eval(data[3]))
                     elif data_dict['id1'] == 'velControl':
                         conn.sendall('r'.encode())
-                        orion.setJointSpeedsArray(eval(data[3]))
+                        orion.setAllJointsSpeeds(eval(data[3]))
                     elif data_dict['id1'] == 'enControl':
                         conn.sendall('r'.encode())
-                        orion.setJointTorqueEnablesArray(eval(data[3]))
+                        orion.setAllJointsTorqueEnable(eval(data[3]))
                     elif data_dict['id1'] == 'config':
                         conn.sendall('r'.encode())
                         value = tryConversion(data)

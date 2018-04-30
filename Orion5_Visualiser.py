@@ -1,12 +1,14 @@
 import sys
-if not './Libraries/' in sys.path:
-    sys.path.append('./Libraries/')
-from MathADV import *
-from General import *
+import ctypes
+import copy
+
+import Python.orion5 as orion5
+from Python.orion5.utils.general import *
+from Python.orion5.math import *
+
 from pyglet.gl import *
 from pyglet.window import key
-import Orion5
-import copy, ctypes
+from pyglet.gl import GLfloat
 
 print('KEYBOARD CONTROLS:',
       '\n   Right - Extends tool point',
@@ -42,54 +44,127 @@ CONTROLZPOSITION = -100
 CONTROLSCALER = 0.097
 CONTROLSIZE = ZONEWIDTH*CONTROLSCALER
 
-seeder = [{'Trans': {'x': 0, 'y': -700, 'z': 0}, 'Rot': {'x': 0, 'y': 0, 'z': 180}}]
-arm = {'id':0, 'coms':['COM8'], 'arms':[{'arm':None, 'Trans':{'x':0, 'y':0, 'z':0}, 'Rot':{'x':0, 'y':0, 'z':0}}]} #arm['arms'][arm['id']]['arm'].
+seeder = [
+    {
+        'Trans': {'x': 0, 'y': -700, 'z': 0},
+        'Rot': {'x': 0, 'y': 0, 'z': 180}
+    }
+]
+
+arm = {
+    'id': 0,
+    'coms': ['COM8'],
+    'arms': [
+        {
+            'arm': None,
+            'Trans': {'x': 0, 'y': 0, 'z': 0},
+            'Rot': {'x': 0, 'y': 0, 'z': 0}
+        }
+    ]
+}
+
 ORION5 = None
-SEQUENCEFOLDER = './Sequences/'
+SEQUENCEFOLDER = './sequences/'
 SEQUENCEBASENAME = 'Sequence'
 SEQUENCEEXTENSION = '.txt'
 SCALER = 10
 
+def vec(*args):
+    return (GLfloat * len(args))(*args)
+
 class Window(pyglet.window.Window):
-    _Widgets = {'Selected':None, 'Widgets':[]}
-    _cameraVector = {'xOffset':160, 'yOffset':-100, 'zOffset':-300*SCALER, 'xRotation':-80, 'yRotation':0, 'zRotation':-150, 'scaler':SCALER}
-    _windowConstants = [50, -100*SCALER, 0.097, None,
-                        [['Claw', 'Attack Angle', 'X', 'Y', 'Attack Depth', 'Turret'], None,
-                         [[0, 0, True, key.MOTION_END_OF_LINE, key.MOTION_NEXT_PAGE],
-                          [0, 0, True, key.MOTION_PREVIOUS_PAGE, key.MOTION_BEGINNING_OF_LINE],
-                          [0, 0, False, key.MOTION_LEFT, key.MOTION_RIGHT],
-                          [0, 0, True, key.MOTION_UP, key.MOTION_DOWN],
-                          [0, 0, True, key.MOTION_BACKSPACE, key.MOTION_DELETE],
-                          [0, 0, False, key.MOTION_PREVIOUS_WORD, key.MOTION_NEXT_WORD]]]] #_windowConstants[4]
+    _Widgets = {
+        'Selected': None,
+        'Widgets': []
+    }
+
+    _cameraVector = {
+        'xOffset': 160,
+        'yOffset': -100,
+        'zOffset': -300*SCALER,
+        'xRotation': -80,
+        'yRotation': 0,
+        'zRotation': -150,
+        'scaler': SCALER
+    }
+
+    _windowConstants = [
+        50, -100*SCALER, 0.097, None,
+        [
+            ['Claw', 'Attack Angle', 'X', 'Y', 'Attack Depth', 'Turret'],
+            None,
+            [
+                [0, 0, True, key.MOTION_END_OF_LINE, key.MOTION_NEXT_PAGE],
+                [0, 0, True, key.MOTION_PREVIOUS_PAGE, key.MOTION_BEGINNING_OF_LINE],
+                [0, 0, False, key.MOTION_LEFT, key.MOTION_RIGHT],
+                [0, 0, True, key.MOTION_UP, key.MOTION_DOWN],
+                [0, 0, True, key.MOTION_BACKSPACE, key.MOTION_DELETE],
+                [0, 0, False, key.MOTION_PREVIOUS_WORD, key.MOTION_NEXT_WORD]
+            ]
+        ]
+    ] #_windowConstants[4]
+
     _controlState = [-1, -1, -1, False, False, False, False, None, None, None, [0,0], None] #_controlState[11]
-    _armConstants = [{'Shoulder': (1+(52/28))},
-                     [{'Turret':100.0,'Shoulder':100.0,'Elbow':100.0,'Wrist':100.0,'Claw':100.0},
-                      ['Turret','Shoulder','Elbow','Wrist','Claw']],
-                     {'X lims': [500.0, 1.0, -250.0, False],
-                      'Z lims': [500.0, 1.0, -250.0, False],
-                      'Attack Angle lims': [360.0, 1.0, 0.0, True],
-                      'Attack Depth lims': [500.0, 1.0, -250.0, False],
-                      'Claw lims': [250.0, 1.0, 20.0, False],
-                      'Turret lims': [360.0, 1.0, 0.0, True],
-                      'Shoulder lims': [360.0, 1.0, 0.0, True],
-                      'Bicep lims': [360.0, 1.0, 0.0, True],
-                      'Wrist lims': [360.0, 1.0, 0.0, True],
-                      'Bicep Len': 170.384,
-                      'Forearm Len': 136.307,
-                      'Wrist 2 Claw': 85.25,
-                      'Key IDs': [[key.MOTION_END_OF_LINE, 'Claw', True],
-                                  [key.MOTION_NEXT_PAGE, 'Claw', False],
-                                  [key.MOTION_UP, 'Z', True],
-                                  [key.MOTION_DOWN, 'Z', False],
-                                  [key.MOTION_LEFT, 'X', True],
-                                  [key.MOTION_RIGHT, 'X', False],
-                                  [key.MOTION_PREVIOUS_WORD, 'Turret', True],
-                                  [key.MOTION_NEXT_WORD, 'Turret', False],
-                                  [key.MOTION_PREVIOUS_PAGE, 'Attack Angle', True],
-                                  [key.MOTION_BEGINNING_OF_LINE, 'Attack Angle', False],
-                                  [key.MOTION_BACKSPACE, 'Attack Depth', True],
-                                  [key.MOTION_DELETE, 'Attack Depth', False]]}] #self._armConstants[2]
-    _armVARS = [{'X': 400.0,
+
+    _armConstants = [
+        {'Shoulder': (1+(52/28))},
+        [
+            {
+                'Turret': 100.0,
+                'Shoulder': 100.0,
+                'Elbow': 100.0,
+                'Wrist': 100.0,
+                'Claw': 100.0
+            },
+            ['Turret', 'Shoulder', 'Elbow', 'Wrist', 'Claw']
+        ],
+        {
+            'X lims': [500.0, 1.0, -250.0, False],
+            'Z lims': [500.0, 1.0, -250.0, False],
+            'Attack Angle lims': [360.0, 1.0, 0.0, True],
+            'Attack Depth lims': [500.0, 1.0, -250.0, False],
+            'Claw lims': [250.0, 1.0, 20.0, False],
+            'Turret lims': [360.0, 1.0, 0.0, True],
+            'Shoulder lims': [360.0, 1.0, 0.0, True],
+            'Bicep lims': [360.0, 1.0, 0.0, True],
+            'Wrist lims': [360.0, 1.0, 0.0, True],
+            'Bicep Len': 170.384,
+            'Forearm Len': 136.307,
+            'Wrist 2 Claw': 85.25,
+            'Key IDs': [
+                [key.MOTION_END_OF_LINE, 'Claw', True],
+                [key.MOTION_NEXT_PAGE, 'Claw', False],
+                [key.MOTION_UP, 'Z', True],
+                [key.MOTION_DOWN, 'Z', False],
+                [key.MOTION_LEFT, 'X', True],
+                [key.MOTION_RIGHT, 'X', False],
+                [key.MOTION_PREVIOUS_WORD, 'Turret', True],
+                [key.MOTION_NEXT_WORD, 'Turret', False],
+                [key.MOTION_PREVIOUS_PAGE, 'Attack Angle', True],
+                [key.MOTION_BEGINNING_OF_LINE, 'Attack Angle', False],
+                [key.MOTION_BACKSPACE, 'Attack Depth', True],
+                [key.MOTION_DELETE, 'Attack Depth', False]
+            ]
+        }
+    ] #self._armConstants[2]
+
+    _armVARS = [
+        {
+            'X': 400.0,
+            'Z': 50.0,
+            'Attack Angle': 0.0,
+            'Attack Depth': 50.0,
+            'Wrist Pos': [0.0, 0.0, 0.0],
+            'Elbow Pos': [0.0, 0.0, 0.0],
+            'Shoulder Pos': [-30.309, 0.0, 53.0],
+            'Elbow Angle': 0.0,
+            'Turret': 180.0,
+            'Shoulder': 0.0,
+            'Elbow': 0.0,
+            'Wrist': 0.0,
+            'Claw': 200.0,
+            'OLD': {
+                'X': 400.0,
                 'Z': 50.0,
                 'Attack Angle': 0.0,
                 'Attack Depth': 50.0,
@@ -102,32 +177,25 @@ class Window(pyglet.window.Window):
                 'Elbow': 0.0,
                 'Wrist': 0.0,
                 'Claw': 200.0,
-                'OLD': {'X': 400.0,
-                        'Z': 50.0,
-                        'Attack Angle': 0.0,
-                        'Attack Depth': 50.0,
-                        'Wrist Pos': [0.0, 0.0, 0.0],
-                        'Elbow Pos': [0.0, 0.0, 0.0],
-                        'Shoulder Pos': [-30.309, 0.0, 53.0],
-                        'Elbow Angle': 0.0,
-                        'Turret': 180.0,
-                        'Shoulder': 0.0,
-                        'Elbow': 0.0,
-                        'Wrist': 0.0,
-                        'Claw': 200.0, },
-                'Iter': ['X',
-                         'Z',
-                         'Attack Angle',
-                         'Attack Depth',
-                         'Wrist Pos',
-                         'Elbow Pos',
-                         'Shoulder Pos',
-                         'Elbow Angle',
-                         'Turret',
-                         'Shoulder',
-                         'Elbow',
-                         'Wrist',
-                         'Claw']}] #_armVARS[arm['id']]
+            },
+            'Iter': [
+                'X',
+                'Z',
+                'Attack Angle',
+                'Attack Depth',
+                'Wrist Pos',
+                'Elbow Pos',
+                'Shoulder Pos',
+                'Elbow Angle',
+                'Turret',
+                'Shoulder',
+                'Elbow',
+                'Wrist',
+                'Claw'
+            ]
+        }
+    ] #_armVARS[arm['id']]
+
     _armObjects = [[], None, []] #_armObjects[2] #_armObjects
     _sequence = [[[]], -1] #_sequence[1][0]
     _objects = [[], None, [], []]
@@ -147,47 +215,62 @@ class Window(pyglet.window.Window):
         def ScrollButton(self):
             self._scrollButton = pyglet.graphics.Batch()
             div = 2.2
-            vertices = [-self._scrollDimensions['w2'] / div, -self._scrollDimensions['w2'] / div, 0,
-                        self._scrollDimensions['w2'] / div, -self._scrollDimensions['w2'] / div, 0,
-                        -self._scrollDimensions['w2'] / div, self._scrollDimensions['w2'] / div, 0,
-                        -self._scrollDimensions['w2'] / div, self._scrollDimensions['w2'] / div, 0,
-                        self._scrollDimensions['w2'] / div, -self._scrollDimensions['w2'] / div, 0,
-                        self._scrollDimensions['w2'] / div, self._scrollDimensions['w2'] / div, 0]
-            normals = [0.0, 0.0, 1.0,
-                       0.0, 0.0, 1.0,
-                       0.0, 0.0, 1.0,
-                       0.0, 0.0, 1.0,
-                       0.0, 0.0, 1.0,
-                       0.0, 0.0, 1.0]
+            vertices = [
+                -self._scrollDimensions['w2'] / div, -self._scrollDimensions['w2'] / div, 0,
+                self._scrollDimensions['w2'] / div, -self._scrollDimensions['w2'] / div, 0,
+                -self._scrollDimensions['w2'] / div, self._scrollDimensions['w2'] / div, 0,
+                -self._scrollDimensions['w2'] / div, self._scrollDimensions['w2'] / div, 0,
+                self._scrollDimensions['w2'] / div, -self._scrollDimensions['w2'] / div, 0,
+                self._scrollDimensions['w2'] / div, self._scrollDimensions['w2'] / div, 0
+            ]
+
+            normals = [
+                0.0, 0.0, 1.0,
+                0.0, 0.0, 1.0,
+                0.0, 0.0, 1.0,
+                0.0, 0.0, 1.0,
+                0.0, 0.0, 1.0,
+                0.0, 0.0, 1.0
+            ]
+
             indices = range(6)
-            self._scrollButton.add_indexed(len(vertices) // 3,
-                                                    GL_TRIANGLES,
-                                                    None,  # group,
-                                                    indices,
-                                                    ('v3f/static', vertices),
-                                                    ('n3f/static', normals))
+            self._scrollButton.add_indexed(
+                len(vertices) // 3,
+                GL_TRIANGLES,
+                None,  # group,
+                indices,
+                ('v3f/static', vertices),
+                ('n3f/static', normals)
+            )
+
         def MenuButton(self):
             self._menuButton = pyglet.graphics.Batch()
             div = 2.2
-            vertices = [-self._menuDimensions['x1'] / div, -self._menuDimensions['y1'] / div, 0,
-                        self._menuDimensions['x1'] / div, -self._menuDimensions['y1'] / div, 0,
-                        -self._menuDimensions['x1'] / div, self._menuDimensions['y1'] / div, 0,
-                        -self._menuDimensions['x1'] / div, self._menuDimensions['y1'] / div, 0,
-                        self._menuDimensions['x1'] / div, -self._menuDimensions['y1'] / div, 0,
-                        self._menuDimensions['x1'] / div, self._menuDimensions['y1'] / div, 0]
-            normals = [0.0, 0.0, 1.0,
-                       0.0, 0.0, 1.0,
-                       0.0, 0.0, 1.0,
-                       0.0, 0.0, 1.0,
-                       0.0, 0.0, 1.0,
-                       0.0, 0.0, 1.0]
+            vertices = [
+                -self._menuDimensions['x1'] / div, -self._menuDimensions['y1'] / div, 0,
+                self._menuDimensions['x1'] / div, -self._menuDimensions['y1'] / div, 0,
+                -self._menuDimensions['x1'] / div, self._menuDimensions['y1'] / div, 0,
+                -self._menuDimensions['x1'] / div, self._menuDimensions['y1'] / div, 0,
+                self._menuDimensions['x1'] / div, -self._menuDimensions['y1'] / div, 0,
+                self._menuDimensions['x1'] / div, self._menuDimensions['y1'] / div, 0
+            ]
+            normals = [
+                0.0, 0.0, 1.0,
+                0.0, 0.0, 1.0,
+                0.0, 0.0, 1.0,
+                0.0, 0.0, 1.0,
+                0.0, 0.0, 1.0,
+                0.0, 0.0, 1.0
+            ]
             indices = range(6)
-            self._menuButton.add_indexed(len(vertices) // 3,
-                                                    GL_TRIANGLES,
-                                                    None,  # group,
-                                                    indices,
-                                                    ('v3f/static', vertices),
-                                                    ('n3f/static', normals))
+            self._menuButton.add_indexed(
+                len(vertices) // 3,
+                GL_TRIANGLES,
+                None,  # group,
+                indices,
+                ('v3f/static', vertices),
+                ('n3f/static', normals)
+            )
 
     class ScrollBar(Widgets):
         Datum = None
@@ -199,9 +282,11 @@ class Window(pyglet.window.Window):
                 for iterator in range(1, len(Input['Text'])):
                     temp = temp + '\n' + Input['Text'][iterator]
                 Input['Text'] = temp
-                self.Label = pyglet.text.Label(Input['Text'], font_name='ARIAL', font_size=15,
-                                            x=self._textShift, y=0, align = 'center',
-                                            anchor_x='center', anchor_y='center', multiline=True, width=1)
+                self.Label = pyglet.text.Label(
+                    Input['Text'], font_name='ARIAL', font_size=15,
+                    x=self._textShift, y=0, align = 'center',
+                    anchor_x='center', anchor_y='center', multiline=True, width=1
+                )
 
     class SubMenu(Widgets):
         _datum = None
@@ -217,30 +302,54 @@ class Window(pyglet.window.Window):
             self.Datum = Input
 
     def __init__(self, width, height, title=''):
-        image = pyglet.image.load('./Libraries/RR_logo_60x60.png')
+        image = pyglet.image.load('./obj/RR_logo_60x60.png')
         shift = -6
-        self.thing = [pyglet.text.Label('C\nL\nA\nW\n \nO\nP\nE\nN\nI\nN\nG', font_name='ARIAL', font_size=15,
-                                        x=shift, y=0, align = 'center',
-                                        anchor_x='center', anchor_y='center', multiline=True, width=1),
-                      pyglet.text.Label('W\nR\nI\nS\nT\n \nA\nN\nG\nL\nE', font_name='ARIAL', font_size=15,
-                                        x=shift, y=0, align = 'center',
-                                        anchor_x='center', anchor_y='center', multiline=True, width=1),
-                      pyglet.text.Label('TOOL RADIUS', font_name='ARIAL', font_size=15,
-                                        x=shift, y=0, align = 'center',
-                                        anchor_x='center', anchor_y='center'),
-                      pyglet.text.Label('T O O L\n \nH E I G H T', font_name='ARIAL', font_size=15,
-                                        x=shift, y=0, align = 'center',
-                                        anchor_x='center', anchor_y='center', multiline = True, width = 1),
-                      pyglet.text.Label('T\nO\nO\nL\n \nD\nI\nS\nT\nA\nN\nC\nE', font_name='ARIAL', font_size=15,
-                                        x=shift, y=0, align = 'center',
-                                        anchor_x='center', anchor_y='center', multiline=True, width=1),
-                      pyglet.text.Label('TURRET ANGLE', font_name='ARIAL', font_size=15,
-                                        x=shift, y=0, align = 'center',
-                                        anchor_x='center', anchor_y='center'),
-                      pyglet.sprite.Sprite(image, x=0, y=0)]
+        self.thing = [
+            pyglet.text.Label(
+                'C\nL\nA\nW\n \nO\nP\nE\nN\nI\nN\nG',
+                font_name='ARIAL', font_size=15,
+                x=shift, y=0, align = 'center',
+                anchor_x='center', anchor_y='center',
+                multiline=True, width=1
+            ),
+            pyglet.text.Label(
+                'W\nR\nI\nS\nT\n \nA\nN\nG\nL\nE',
+                font_name='ARIAL', font_size=15,
+                x=shift, y=0, align = 'center',
+                anchor_x='center', anchor_y='center',
+                multiline=True, width=1
+            ),
+            pyglet.text.Label(
+                'TOOL RADIUS',
+                font_name='ARIAL', font_size=15,
+                x=shift, y=0, align = 'center',
+                anchor_x='center', anchor_y='center'
+            ),
+            pyglet.text.Label(
+                'T O O L\n \nH E I G H T',
+                font_name='ARIAL', font_size=15,
+                x=shift, y=0, align = 'center',
+                anchor_x='center', anchor_y='center',
+                multiline = True, width = 1
+            ),
+            pyglet.text.Label(
+                'T\nO\nO\nL\n \nD\nI\nS\nT\nA\nN\nC\nE',
+                font_name='ARIAL', font_size=15,
+                x=shift, y=0, align = 'center',
+                anchor_x='center', anchor_y='center',
+                multiline=True, width=1
+            ),
+            pyglet.text.Label(
+                'TURRET ANGLE',
+                font_name='ARIAL', font_size=15,
+                x=shift, y=0, align = 'center',
+                anchor_x='center', anchor_y='center'
+            ),
+            pyglet.sprite.Sprite(image, x=0, y=0)
+        ]
 
         global arm
-        pyglet.window.Window.__init__(self, width, height, title, resizable=True, style = pyglet.window.Window.WINDOW_STYLE_DEFAULT )
+        pyglet.window.Window.__init__(self, width, height, title, resizable=True, style=pyglet.window.Window.WINDOW_STYLE_DEFAULT)
         # select libExtension based on platform
         libExtension = '.dll' # windows as default
         if sys.platform == 'darwin':
@@ -248,7 +357,7 @@ class Window(pyglet.window.Window):
         elif 'linux' in sys.platform:
             libExtension = '.so'# linux based
         # load functions from C dynamic library
-        clib = ctypes.cdll.LoadLibrary('Libraries/libOrion5Kinematics' + libExtension)
+        clib = ctypes.cdll.LoadLibrary('./bin/libOrion5Kinematics' + libExtension)
         self.IKinematics = clib.IKinematics
         self.IKinematics.restype = C_ArmVars
         self.CollisionCheck = clib.CollisionCheck
@@ -342,22 +451,26 @@ class Window(pyglet.window.Window):
         factor = [.1,.5,.1]
         glLightfv(GL_LIGHT1, GL_SPECULAR, vec(1.0*factor[1],1.0*factor[1],1.0*factor[1],1.0*factor[1]))
         glEnable(GL_LIGHT1)
-        arm['arms'][arm['id']]['arm'] = Orion5.Orion5(arm['coms'][arm['id']])
+        arm['arms'][arm['id']]['arm'] = orion5.Orion5(arm['coms'][arm['id']])
         self.on_text_motion(False)
         self._windowConstants[4][1] = pyglet.graphics.Batch()
         div = 2.2
-        vertices = [-self._controlState[7] / div, -self._controlState[7] / div, 0,
-                    self._controlState[7] / div, -self._controlState[7] / div, 0,
-                    -self._controlState[7] / div, self._controlState[7] / div, 0,
-                    -self._controlState[7] / div, self._controlState[7] / div, 0,
-                    self._controlState[7] / div, -self._controlState[7] / div, 0,
-                    self._controlState[7] / div, self._controlState[7] / div, 0]
-        normals = [0.0,0.0,1.0,
-                   0.0,0.0,1.0,
-                   0.0,0.0,1.0,
-                   0.0,0.0,1.0,
-                   0.0,0.0,1.0,
-                   0.0,0.0,1.0]
+        vertices = [
+            -self._controlState[7] / div, -self._controlState[7] / div, 0,
+            self._controlState[7] / div, -self._controlState[7] / div, 0,
+            -self._controlState[7] / div, self._controlState[7] / div, 0,
+            -self._controlState[7] / div, self._controlState[7] / div, 0,
+            self._controlState[7] / div, -self._controlState[7] / div, 0,
+            self._controlState[7] / div, self._controlState[7] / div, 0
+        ]
+        normals = [
+            0.0,0.0,1.0,
+            0.0,0.0,1.0,
+            0.0,0.0,1.0,
+            0.0,0.0,1.0,
+            0.0,0.0,1.0,
+            0.0,0.0,1.0
+        ]
         indices = range(6)
         self._windowConstants[4][1].add_indexed(len(vertices) // 3,
                                       GL_TRIANGLES,
@@ -365,62 +478,94 @@ class Window(pyglet.window.Window):
                                       indices,
                                       ('v3f/static', vertices),
                                       ('n3f/static', normals))
-        ModelSets = PolyRead('STLs/3dObjects.SAM', self._cameraVector['scaler'])
+        ModelSets = PolyRead('./obj/3dObjects.SAM', self._cameraVector['scaler'])
         self._armObjects[1] = len(ModelSets)
         for iterator1 in range(self._armObjects[1]):
             self._armObjects[2].append(ModelSets[iterator1][0][0])
-            self._armObjects[0].append([pyglet.graphics.Batch(), [ModelSets[iterator1][0][1][0],
-                                                            ModelSets[iterator1][0][1][1],
-                                                            ModelSets[iterator1][0][1][2],
-                                                            ModelSets[iterator1][0][1][3]]])
+            self._armObjects[0].append(
+                [
+                    pyglet.graphics.Batch(),
+                    [
+                        ModelSets[iterator1][0][1][0],
+                        ModelSets[iterator1][0][1][1],
+                        ModelSets[iterator1][0][1][2],
+                        ModelSets[iterator1][0][1][3]
+                    ]
+                ]
+            )
+
             vertices = []
             normals = []
             for iterator2 in range(len(ModelSets[iterator1][1])):
                 for iterator3 in range(1, 4):
                     vertices.extend(ModelSets[iterator1][1][iterator2][iterator3])
                     normals.extend(ModelSets[iterator1][1][iterator2][0])
+
             # Create a list of triangle indices.
             indices = range(3 * len(ModelSets[iterator1][1]))  # [[3*i, 3*i+1, 3*i+2] for i in xrange(len(facets))]
-            self._armObjects[0][-1][0].add_indexed(len(vertices) // 3,
-                                             GL_TRIANGLES,
-                                             None,  # group,
-                                             indices,
-                                             ('v3f/static', vertices),
-                                             ('n3f/static', normals))
+            self._armObjects[0][-1][0].add_indexed(
+                len(vertices) // 3,
+                GL_TRIANGLES,
+                None,  # group,
+                indices,
+                ('v3f/static', vertices),
+                ('n3f/static', normals)
+            )
+
         pyglet.clock.schedule_interval(self.update, 1 / 20.0)
         Offsets = [[0.0, 0.0, 0.0], [200.0, 200.0, 200.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0],
                    [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
         Rotations = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0],
                      [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
 
-        ModelSets = PopulateModels(PullFileNames('stl', './STLs/'), self._cameraVector['scaler'])
+        ModelSets = PopulateModels(PullFileNames('stl', './obj/'), self._cameraVector['scaler'])
         self._objects[1] = len(ModelSets)
         for iterator1 in range(self._objects[1]):
-            self._objects[3].append({'Trans': {'x': Offsets[ModelSets[iterator1][0][0]][0],
-                                               'y': Offsets[ModelSets[iterator1][0][0]][1],
-                                               'z': Offsets[ModelSets[iterator1][0][0]][2]},
-                                     'Rot': {'x': Rotations[ModelSets[iterator1][0][0]][0],
-                                             'y': Rotations[ModelSets[iterator1][0][0]][1],
-                                             'z': Rotations[ModelSets[iterator1][0][0]][2]}})
+            self._objects[3].append(
+                {
+                    'Trans': {
+                        'x': Offsets[ModelSets[iterator1][0][0]][0],
+                        'y': Offsets[ModelSets[iterator1][0][0]][1],
+                        'z': Offsets[ModelSets[iterator1][0][0]][2]
+                    },
+                    'Rot': {
+                        'x': Rotations[ModelSets[iterator1][0][0]][0],
+                        'y': Rotations[ModelSets[iterator1][0][0]][1],
+                        'z': Rotations[ModelSets[iterator1][0][0]][2]
+                    }
+                }
+            )
             self._objects[2].append(ModelSets[iterator1][0][0])
-            self._objects[0].append([pyglet.graphics.Batch(), [ModelSets[iterator1][0][1][0],
-                                                               ModelSets[iterator1][0][1][1],
-                                                               ModelSets[iterator1][0][1][2],
-                                                               ModelSets[iterator1][0][1][3]]])
+            self._objects[0].append(
+                [
+                    pyglet.graphics.Batch(),
+                    [
+                        ModelSets[iterator1][0][1][0],
+                        ModelSets[iterator1][0][1][1],
+                        ModelSets[iterator1][0][1][2],
+                        ModelSets[iterator1][0][1][3]
+                    ]
+                ]
+            )
+
             vertices = []
             normals = []
             for iterator2 in range(len(ModelSets[iterator1][1])):
                 for iterator3 in range(1, 4):
                     vertices.extend(ModelSets[iterator1][1][iterator2][iterator3])
                     normals.extend(ModelSets[iterator1][1][iterator2][0])
+
             # Create a list of triangle indices.
             indices = range(3 * len(ModelSets[iterator1][1]))  # [[3*i, 3*i+1, 3*i+2] for i in xrange(len(facets))]
-            self._objects[0][-1][0].add_indexed(len(vertices) // 3,
-                                                GL_TRIANGLES,
-                                                None,  # group,
-                                                indices,
-                                                ('v3f/static', vertices),
-                                                ('n3f/static', normals))
+            self._objects[0][-1][0].add_indexed(
+                len(vertices) // 3,
+                GL_TRIANGLES,
+                None,  # group,
+                indices,
+                ('v3f/static', vertices),
+                ('n3f/static', normals)
+            )
+
         for item1 in self._windowConstants[4][2]:
             self.on_text_motion(item1[3])
             self.on_text_motion(item1[4])
@@ -583,12 +728,16 @@ class Window(pyglet.window.Window):
         elif symbol == key.D:
             # record entry
             for iterator1 in range(len(self._sequence[0])):
-                self._sequence[0][iterator1].append([['Turret', copy.copy(self._armVARS[iterator1]['Turret'])],
-                                                     ['Shoulder', copy.copy(self._armVARS[iterator1]['Shoulder'])],
-                                                     ['Elbow', copy.copy(self._armVARS[iterator1]['Elbow'])],
-                                                     ['Wrist', copy.copy(self._armVARS[iterator1]['Wrist'])],
-                                                     ['Claw', copy.copy(self._armVARS[iterator1]['Claw'])],
-                                                     [0,2]])
+                self._sequence[0][iterator1].append(
+                    [
+                        ['Turret', copy.copy(self._armVARS[iterator1]['Turret'])],
+                        ['Shoulder', copy.copy(self._armVARS[iterator1]['Shoulder'])],
+                        ['Elbow', copy.copy(self._armVARS[iterator1]['Elbow'])],
+                        ['Wrist', copy.copy(self._armVARS[iterator1]['Wrist'])],
+                        ['Claw', copy.copy(self._armVARS[iterator1]['Claw'])],
+                        [0,2]
+                    ]
+                )
         elif symbol == key.Z:
             if len(self._sequence[0][0]) != 0:
                 #run sequence toggle
@@ -663,14 +812,14 @@ class Window(pyglet.window.Window):
                     pass
             for iterator1 in range(len(arm['arms'])):
                 arm['arms'][iterator1]['arm'].exit()
-                arm['arms'][iterator1]['arm'] = Orion5.Orion5(arm['coms'][iterator1])
+                arm['arms'][iterator1]['arm'] = orion5.Orion5(arm['coms'][iterator1])
         elif symbol == key.F:
             arm['coms'].append(str(ComQuery().device))
             if len(seeder) > len(arm['arms'])-1:
                 arm['arms'].append(newARM(seeder[len(arm['arms'])-1]))
             else:
                 arm['arms'].append(newARM())
-            arm['arms'][-1]['arm'] = Orion5.Orion5(arm['coms'][-1])
+            arm['arms'][-1]['arm'] = orion5.Orion5(arm['coms'][-1])
 
             self._armVARS.append({'X': 400.0,
                                     'Z': 50.0,
@@ -786,11 +935,11 @@ class Window(pyglet.window.Window):
                     if item > maxSpeed:
                         maxSpeed = 0.0 + item
                 #arm['arms'][iterator1]['arm'].setTimeToGoal(maxSpeed)
-                arm['arms'][iterator1]['arm'].base.setGoalPosition(wrap360f(-self._armVARS[iterator1]['Turret']))
-                arm['arms'][iterator1]['arm'].shoulder.setGoalPosition(wrap360f(self._armVARS[iterator1]['Shoulder'] * self._armConstants[0]['Shoulder']))
-                arm['arms'][iterator1]['arm'].elbow.setGoalPosition(wrap360f(self._armVARS[iterator1]['Elbow']))
-                arm['arms'][iterator1]['arm'].wrist.setGoalPosition(wrap360f(self._armVARS[iterator1]['Wrist']))
-                arm['arms'][iterator1]['arm'].claw.setGoalPosition(wrap360f(self._armVARS[iterator1]['Claw']))
+                arm['arms'][iterator1]['arm'].base.setPosition(wrap360f(-self._armVARS[iterator1]['Turret']))
+                arm['arms'][iterator1]['arm'].shoulder.setPosition(wrap360f(self._armVARS[iterator1]['Shoulder'] * self._armConstants[0]['Shoulder']))
+                arm['arms'][iterator1]['arm'].elbow.setPosition(wrap360f(self._armVARS[iterator1]['Elbow']))
+                arm['arms'][iterator1]['arm'].wrist.setPosition(wrap360f(self._armVARS[iterator1]['Wrist']))
+                arm['arms'][iterator1]['arm'].claw.setPosition(wrap360f(self._armVARS[iterator1]['Claw']))
 
     def on_draw(self):
         global arm
@@ -936,7 +1085,7 @@ class Window(pyglet.window.Window):
         global arm
         #Check the keypress
         '''
-        TODO: build a temporary holder for the old value of the thing being changed, 
+        TODO: build a temporary holder for the old value of the thing being changed,
         along with a loop around this entire thing
         '''
         for item in self._armVARS[arm['id']]['Iter']:
@@ -1059,7 +1208,7 @@ def Main():
     import pyglet
     global ORION5
     ORION5 = Window(WINDOW[0], WINDOW[1], 'Orion5 Visualiser and Controller')
-    icon1 = pyglet.image.load('./Libraries/RR_logo_512x512.png')
+    icon1 = pyglet.image.load('./obj/RR_logo_512x512.png')
     ORION5.set_icon(icon1)
     ORION5.set_location(50,50)
     pyglet.app.run()

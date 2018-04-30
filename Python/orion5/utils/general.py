@@ -1,6 +1,8 @@
+import time
+import struct
 from os import listdir
 from os.path import isfile, join
-import struct
+
 def PullFileNames(extension, subFolder):
     ''' Pulls a list of STL files in, provided they start
     with a number 000 up to 010'''
@@ -120,6 +122,14 @@ def ComQuery():
     goButton.configure(command=GoButton)
     comQuery.mainloop()
     return comObj
+
+def waitForOrion5Forever():
+    while True:
+        comport = ComQuery()
+        if comport is not None:
+            return comport.device
+        time.sleep(1)
+    return None
 
 def STLRead(Models, fileName, ModelID, ColorID = 1, scaler = 1):
     filePipe = open(fileName, 'rb')

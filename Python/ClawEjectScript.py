@@ -1,24 +1,19 @@
 import time
-from Orion5 import Orion5
-from General import ComQuery
 
-# search for an Orion5
-comport = None
+import orion5
+from orion5.utils.general import waitForOrion5Forever
+
 print('\nSearching for Orion5...')
-while True:
-    comport = ComQuery()
-    if comport is not None:
-        print('Found Orion5, serial port name:', comport.device)
-        break
-    time.sleep(2)
+comport = waitForOrion5Forever()
+print('Found Orion5, serial port name:', comport)
 
-orion = Orion5(comport.device)
+orion = orion5.Orion5(comport)
 time.sleep(3)
 
 def gotoPositionBlocking(pos):
-    orion.claw.setVariable('control variables', 'goalPosition', pos)
-    while abs(pos - orion.claw.getVariable('feedback variables', 'currentPosition')) > 2:
-        print('%.2f' % orion.claw.getVariable('feedback variables', 'currentPosition'))
+    orion.claw.setPosition(pos)
+    while abs(pos - orion.claw.getPosition()) > 2:
+        print('%.2f' % orion.claw.getPosition())
         time.sleep(0.2)
 
 try:
