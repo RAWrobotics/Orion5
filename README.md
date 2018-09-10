@@ -7,21 +7,20 @@ _Please read through the Quick Start Guide and watch the videos before using Ori
 
 ## Install Dependencies
 _Follow these steps before attempting to use the Python or MATLAB libraries, or the Visualiser_
-1. Install python 3.6.2 on your machine: https://www.python.org/downloads/
-2. Windows users: Make sure to select the "Add python to environment variables" option while installing.
-3. Install dependencies for libraries using `pip3 install pyserial pyglet`.
-4. If the pip3 command is not found, navigate to your Python install directory, on Windows this is usually `C:\Users\<username>\AppData\Local\Programs\Python\Python36-32`, enter the `Scripts` directory and launch a Powershell window using `Shift + RightClick`, and then try `./pip3 install pyserial pyglet`.
+1. Install the latest version of Python 3 (3.7 at the time of writing) onto your machine: https://www.python.org/downloads/
+2. *Windows users*: Make sure to select the "Add Python to PATH" option while installing.
+3. Install dependencies for libraries using `pip3 install pyserial`.
+4. Check if pyserial was installed correctly by running `python3 -c "import serial"` if you see no error message, it worked!
+5. If the pip3 command is not found or the library is not available, navigate to your Python install directory, on Windows this is usually `C:\Users\<username>\AppData\Local\Programs\Python\Python37`, enter the `Scripts` directory and launch a PowerShell/cmd window using `Shift + RightClick`, and then try `./pip3 install pyserial`.
 
 ## MATLAB Library
-_In order to use the MATLAB library, the `Orion5_Server.py` Python program is required to run in the background; it acts as an interface between MATLAB and the Orion5 Robotic Arm_
+_In order to use the MATLAB library, the `Orion5Server.py` Python program is required to run in the background; it acts as an interface between MATLAB and the Orion5 Robotic Arm_
 ### Python Server
-1. The program `Orion5_Server.py` is required to be running in the background to use the MATLAB library.
-2. If the 'Install Dependencies' steps above have been completed, launch the `Orion5_Server.py` program by double clicking it or by running `python3 Orion5_Server.py` in the Libraries directory.
-3. The serial port name of the Orion5 robotic arm should be printed in the terminal if found, otherwise the program will keep waiting until it is able to find one. Press `Ctrl+C` to exit the program.
-4. The message `Waiting for MATLAB` means the program is ready to communicate with MATLAB.
-5. The message `Connected to MATLAB` means your MATLAB script is currently running and communicating with the `Orion5_Server.py`.
-6. If your MATLAB script crashes midway or does not call the `<library_reference>.stop()` function correctly upon completion, a socket may be kept open from MATLAB to `Orion5_Server.py`. This may appear as an `OS Error` in python, or a `socket error` in MATLAB next time you run your script. Simply call the `<library_reference>.stop()` function in the MATLAB console to cleanly exit the Orion5.m library.
-7. Press `Ctrl+C` to quit the server cleanly.
+1. The program `Orion5Server.py` is required to be running in the background to use the MATLAB library.
+2. If the 'Install Dependencies' steps above have been completed, launch the `Orion5Server.py` program by double clicking it or by running `python3 Orion5Server.py` in the Libraries directory.
+3. The server will print out `Waiting for connections` if it is running correctly. You will see a `Connection from 127.0.0.1:XXXX` when either MATLAB script or Python script connects to the server.
+4. If your MATLAB script crashes midway or does not call the `<library_reference>.stop()` function correctly upon completion, a socket may be kept open from MATLAB to `Orion5Server.py`. This may appear as an `OS Error` in python, or a `socket error` in MATLAB next time you run your script. Simply call the `<library_reference>.stop()` function in the MATLAB console to cleanly exit the Orion5.m library.
+5. Press `Ctrl+C` to quit the server cleanly.
 
 ### Basic Usage 
 The library pings the Python server every second if no other library functions are being called, this is like a watchdog timer, if Python server doesn't hear anything for 5 seconds, it will return to waiting for a new connection.  
