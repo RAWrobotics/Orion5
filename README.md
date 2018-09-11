@@ -5,8 +5,18 @@ _Please read through the Quick Start Guide and watch the videos before using Ori
 ### Orion5 User Manual: https://goo.gl/h3i2br
 ### Orion5 Tutorial Videos: https://goo.gl/5tkjUF
 
+## Orion5 Simulator - Windows
+If you're a Windows user, you can run the .exe installer available in the latest release: https://github.com/rawrobotics/Orion5/releases/latest
+
+This installer will install the Python3.7 and the required python libraries automatically. Skip the other setup steps below if you are using the simulator.
+
+The simulator program runs a copy of the Orion5Server.py in the background, which you can connect to from either your Python or MATLAB script. The simulator lets you choose if your code should control a simulated Orion5 robotic arm, or a real one that is plugged in via USB. Example: https://youtu.be/yubWzbC6mr4
+
+Coming to Linux and MacOS soon.
+
+
 ## Install Dependencies
-_Follow these steps before attempting to use the Python or MATLAB libraries, or the Visualiser_
+_Follow these steps before attempting to use the Python or MATLAB libraries_
 1. Install the latest version of Python 3 (3.7 at the time of writing) onto your machine: https://www.python.org/downloads/
 2. *Windows users*: Make sure to select the "Add Python to PATH" option while installing.
 3. Install dependencies for libraries using `pip3 install pyserial`.
