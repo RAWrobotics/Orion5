@@ -1,4 +1,6 @@
 import time
+import os
+import glob
 import serial
 
 from tkinter import *
@@ -6,8 +8,14 @@ from tkinter import ttk
 from tkinter import filedialog
 
 import orion5
-from orion5.utils import update
+from orion5.utils import update, signal_update
 from orion5.utils.general import ComQuery
+
+FIRMWARE_FOLDER = '../Orion5-private/Firmware'
+FILENAME_FORMAT = 'Orion5_Firmware_{}_{}.bin'
+
+if not os.path.isdir(FIRMWARE_FOLDER):
+    FIRMWARE_FOLDER = '../Firmware'
 
 class FirmwareUpdater(Tk):
     def __init__(self):
@@ -16,11 +24,9 @@ class FirmwareUpdater(Tk):
 
         self.progress_var = DoubleVar()
         self.orion5_status = StringVar()
-        self.firmware_status = StringVar()
         self.main_status = StringVar()
 
         self.state = 0
-        self.orion = None
         self.com_port = None
         self.file_path = ""
 
@@ -36,101 +42,74 @@ class FirmwareUpdater(Tk):
         self.main_label = ttk.Label(self.main_frame, textvariable=self.main_status, justify="center")
         self.main_label.grid(column=0, row=2, columnspan=6, padx=5, pady=5, sticky=(N, S))
 
-        # Orion5 status
-        self.orion5_label = ttk.Label(self.main_frame, textvariable=self.orion5_status, justify="left")
-        self.orion5_label.grid(column=0, row=0, columnspan=5, padx=5, pady=5, sticky=W)
+        # Orion5 connection status
+        self.orion5_label = ttk.Label(self.main_frame, textvariable=self.orion5_status, justify="center")
+        self.orion5_label.grid(column=0, row=0, columnspan=6, padx=5, pady=5, sticky=(N, S))
 
-        self.refresh_button = ttk.Button(self.main_frame, text="Refresh", command=self.find_Orion5)
-        self.refresh_button.grid(column=5, row=0, columnspan=1, padx=5, pady=5, sticky=E)
-
-        # Firmware status
-        self.firmware_label = ttk.Label(self.main_frame, textvariable=self.firmware_status, justify="left")
-        self.firmware_label.grid(column=0, row=1, columnspan=5, padx=5, pady=5, sticky=W)
-
-        self.browse_button = ttk.Button(self.main_frame, text="Browse", command=self.browse)
-        self.browse_button.grid(column=5, row=1, columnspan=1, padx=5, pady=5, sticky=E)
-
-        # Firmware updating bits
+        # Progress bar
         self.progress = ttk.Progressbar(self.main_frame, orient="horizontal", mode="determinate", length=400, variable=self.progress_var, maximum=100)
         self.progress.grid(column=0, row=3, columnspan=6, padx=5, pady=5)
 
+        # Update Button
         self.start_button = ttk.Button(self.main_frame, text="Start", command=self.flash, state='disabled')
-        self.start_button.grid(column=2, row=4, columnspan=3, padx=5, pady=5, sticky=(E, W))
+        self.start_button.grid(column=1, row=4, columnspan=4, padx=5, pady=5, sticky=(N, S))
 
-        self.checkbox_status = StringVar()
-        self.checkbox = ttk.Checkbutton(self.main_frame, text='Bootloader?', command=self.check, variable=self.checkbox_status, onvalue='1', offvalue='0')
-        self.checkbox.grid(column=0, row=4, padx=5, pady=5)
+        self.orion5_status.set("Unable to find Orion5...")
+        self.main_status.set("No firmware file")
 
-        self.orion5_status.set("Refresh to connect to Orion5")
-        self.firmware_status.set("Select a firmware file")
-        self.main_status.set("Connect to Orion5 and select firmware file")
+        self.wait_for_stuff()
 
-    def check(self):
-        self.state = int(self.checkbox_status.get())
-        self.check_ready()
-
-    def find_Orion5(self):
+    def wait_for_stuff(self):
         self.orion5_status.set("Looking for Orion5...")
         comport = ComQuery()
         if comport is not None:
             self.com_port = str(comport.device)
             self.orion5_status.set("Found Orion5 at " + self.com_port)
-            if self.state == 0:
-                self.orion = orion5.Orion5(self.com_port)
-            self.check_ready()
         else:
             self.com_port = None
             self.orion5_status.set("Unable to find Orion5...")
 
-    def browse(self):
-        self.file_path = filedialog.askopenfilename(initialdir=".", title="Select Firmware File", filetypes=(("BIN files", "*.bin"),))
-        if len(self.file_path) > 0:
-            self.firmware_status.set(self.file_path.split('/')[-1])
-            self.check_ready()
+        try:
+            files = glob.glob(os.path.join(FIRMWARE_FOLDER, FILENAME_FORMAT.format('*', '*')))
+            max_version = max([int(x.split('_')[-2]) for x in files])
+            self.file_path = os.path.join(FIRMWARE_FOLDER, FILENAME_FORMAT.format(max_version, '*'))
+            self.main_status.set("Found " + os.path.basename(self.file_path))
+        except ValueError as e:
+            print(e)
+
+        self.check_ready()
+        self.after(500, self.wait_for_stuff)
 
     def check_ready(self):
         if self.com_port is not None and self.file_path != '':
             self.start_button.config(state="normal")
-            if self.state == 0:
-                self.main_status.set("Ready to start")
-                self.start_button.config(text="Start")
-            elif self.state == 1:
-                self.main_status.set("Ready to flash")
-                self.start_button.config(text="Flash")
+            self.main_status.set("Ready to update to " + os.path.basename(self.file_path))
+            self.start_button.config(text="Update")
         else:
             self.start_button.config(state="disabled")
 
     def flash(self):
         if self.state == 0:
-            self.progress_var.set(0)
-            self.orion.setVariable('firmwareUpdate', 1)
-            time.sleep(0.25)
-            self.orion.setVariable('firmwareUpdate', 1)
-            time.sleep(2)
-            self.main_status.set('Power cycle Orion5')
-            self.orion.exit()
-            self.orion5_status.set('Click refresh to reconnect')
-            self.com_port = None
-            self.check_ready()
+            # s = serial.Serial(port=self.com_port, baudrate=1000000, write_timeout=0, timeout=30)
+            # signal_update(s, self.flashing_callback)
+            o = orion5.Orion5(mode='standalone', serialName=self.com_port)
+            o.setVariable('firmwareUpdate', 1)
+            time.sleep(5)
             self.state = 1
-        elif self.state == 1:
+
+        if self.state == 1:
             s = serial.Serial(port=self.com_port, baudrate=500000, write_timeout=0, timeout=30)
             update(s=s, filename=self.file_path, callback=self.flashing_callback, output=False)
             self.start_button.config(state="disabled")
-            self.refresh_button.config(state="disabled")
-            self.browse_button.config(state="disabled")
 
     def flashing_callback(self, status, index, total):
-        self.progress.config(maximum=total)
+        if total > 0:
+            self.progress.config(maximum=total)
         self.progress_var.set(index)
         self.main_status.set(status)
         self.update()
 
     def on_closing(self):
-        try:
-            self.orion.exit()
-        except:
-            pass
         self.destroy()
 
 app = FirmwareUpdater()
