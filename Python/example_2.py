@@ -2,17 +2,16 @@ import time
 import orion5
 from orion5 import orion5_math
 
-orion = orion5.Orion5()
 
-time.sleep(1)
-
-print('Connected')
-
-def arrived(desired, actual):
+# returns true if the element-wise difference between desired/actual is less than threshold
+def arrived(desired, actual, threshold):
     diff = orion5_math.absdiff(joints, actual)
     diff[0] = abs((diff[0] + 180) % 360 - 180)
-    return max(diff) < arriveThreshold
+    return max(diff) < threshold
 
+
+# 2d list that holds the sequence
+# base, shoulder, elbow, wrist, claw
 path = [
     [  0,  90, 180, 180, 120],
     [ 90,  90, 180, 180, 120],
@@ -26,23 +25,35 @@ path = [
     [  0,  90, 180, 180, 120],
 ]
 
-arriveThreshold = 30
-waitTime = 2
-pathIndex = 0
 
+# variables
+arriveThreshold = 10
+waitTime = 0
+index = 0
+
+
+# create Orion5 object
+orion = orion5.Orion5()
+
+
+# main loop
 while True:
 
-    joints = path[pathIndex]
+    joints = path[index]
 
-    print("Moving to:", [int(e) for e in joints])
+    print("Moving to:", joints)
 
-    while not arrived(joints, orion.getAllJointsPosition()):
+    # keep writing the desired position until we arrive
+    while not arrived(joints, orion.getAllJointsPosition(), arriveThreshold):
         orion.setAllJointsPosition(joints)
         time.sleep(0.1)
 
-    pathIndex += 1
-    if pathIndex >= len(path):
-        pathIndex = 0
+    # increment and wrap the current position within the sequence
+    index += 1
+    if index >= len(path):
+        index = 0
+
+    time.sleep(waitTime)
 
 orion.stop()
 
