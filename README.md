@@ -14,7 +14,6 @@ The simulator program runs a copy of the Orion5Server.py in the background, whic
 
 Coming to Linux and MacOS soon.
 
-
 ## Install Dependencies
 _Follow these steps before attempting to use the Python or MATLAB libraries_
 1. Install the latest version of Python 3 (3.7 at the time of writing) onto your machine: https://www.python.org/downloads/
@@ -22,6 +21,8 @@ _Follow these steps before attempting to use the Python or MATLAB libraries_
 3. Install dependencies for libraries using `pip3 install pyserial`.
 4. Check if pyserial was installed correctly by running `python3 -c "import serial"` if you see no error message, it worked!
 5. If the pip3 command is not found or the library is not available, navigate to your Python install directory, on Windows this is usually `C:\Users\<username>\AppData\Local\Programs\Python\Python37`, enter the `Scripts` directory and launch a PowerShell/cmd window using `Shift + RightClick`, and then try `./pip3 install pyserial`.
+6. If Orion5 robotic arm is not being recognised by Orion5Server.py or coming up as "not recognised" by your machine, you may need to update your Virtual COM Port (VCP) driver, find the appropriate installer for your machine here: https://www.ftdichip.com/Drivers/VCP.htm
+
 
 ## MATLAB Library
 _In order to use the MATLAB library, the `Orion5Server.py` Python program is required to run in the background; it acts as an interface between MATLAB and the Orion5 Robotic Arm_
