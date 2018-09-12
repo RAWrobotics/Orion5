@@ -1,9 +1,9 @@
-# Orion5 Robotic Arm
+# Orion5 Robotic Arm  
 
 _Please read through the Quick Start Guide and watch the videos before using Orion5_
 ### Orion5 Quick Start Guide: https://goo.gl/DQm3x3
 ### Orion5 User Manual: https://goo.gl/h3i2br
-### Orion5 Tutorial Videos: https://goo.gl/5tkjUF
+### Orion5 Tutorial Videos: https://goo.gl/5tkjUF  
 
 ## Orion5 Simulator - Windows
 If you're a Windows user, you can run the .exe installer available in the latest release: https://github.com/rawrobotics/Orion5/releases/latest
@@ -12,7 +12,7 @@ This installer will install the Python3.7 and the required python libraries auto
 
 The simulator program runs a copy of the Orion5Server.py in the background, which you can connect to from either your Python or MATLAB script. The simulator lets you choose if your code should control a simulated Orion5 robotic arm, or a real one that is plugged in via USB. Example: https://youtu.be/yubWzbC6mr4
 
-Coming to Linux and MacOS soon.
+Coming to Linux and MacOS soon.  
 
 ## Install Dependencies
 _Follow these steps before attempting to use the Python or MATLAB libraries_
@@ -21,7 +21,7 @@ _Follow these steps before attempting to use the Python or MATLAB libraries_
 3. Install dependencies for libraries using `pip3 install pyserial`.
 4. Check if pyserial was installed correctly by running `python3 -c "import serial"` if you see no error message, it worked!
 5. If the pip3 command is not found or the library is not available, navigate to your Python install directory, on Windows this is usually `C:\Users\<username>\AppData\Local\Programs\Python\Python37`, enter the `Scripts` directory and launch a PowerShell/cmd window using `Shift + RightClick`, and then try `./pip3 install pyserial`.
-6. If Orion5 robotic arm is not being recognised by Orion5Server.py or coming up as "not recognised" by your machine, you may need to update your Virtual COM Port (VCP) driver, find the appropriate installer for your machine here: https://www.ftdichip.com/Drivers/VCP.htm
+6. If Orion5 robotic arm is not being recognised by Orion5Server.py or coming up as "not recognised" by your machine, you may need to update your Virtual COM Port (VCP) driver, find the appropriate installer for your machine here: https://www.ftdichip.com/Drivers/VCP.htm  
 
 
 ## MATLAB Library
