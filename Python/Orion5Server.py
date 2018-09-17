@@ -199,7 +199,7 @@ class SocketThread(Thread):
 
             elif len(data) == 3:
                 var = self.orion.joints[data_dict['jointID']].getVariable(data_dict['id1'], data_dict['id2'])
-                self.socket.sendall(str(var))
+                self.write((data_dict['id1'] + '+' + str(var)))
 
 
 class Flag(object):
