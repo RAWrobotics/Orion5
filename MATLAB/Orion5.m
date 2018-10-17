@@ -19,6 +19,8 @@ classdef Orion5 < handle
     end
     
     properties (Access = 'private')
+        debug_filename = 'orion5_matlab_log.txt';
+        debug = 0;
         socket = 0;
         tmr = 0;
         locked = 0;
@@ -29,10 +31,13 @@ classdef Orion5 < handle
     
     %% Public Methods
     methods
+        
         %% Constructor
         function obj = Orion5()
             warning off backtrace
             disp('Orion5.m: Starting')
+            obj.writeToDebug('info', 'constructor() called');
+            
             oldTimer = timerfind('Name', 'Orion5KeepAlive');
             if ~isempty(oldTimer)
                 stop(oldTimer);
@@ -44,10 +49,12 @@ classdef Orion5 < handle
             catch e
                 switch e.identifier
                     case 'MATLAB:UndefinedFunction'
-                        warning('Orion5.m: is the "Instrument Control Toolbox" installed?');
+                        warning('Orion5.m: is the "Instrument Control Toolbox" installed m8?');
+                        obj.writeToDebug('err ', 'constructor() no toolbox m8');
                         rethrow(e);
                     otherwise
                          error('Orion5.m: Unable to open socket: is Orion5_Server.py running and waiting for MATLAB?');
+                         obj.writeToDebug('err ', 'constructor() cannot open socket');
                 end
                 obj.socket = 0;
             end
@@ -55,17 +62,24 @@ classdef Orion5 < handle
             obj.tmr = timer('Period', 0.5, 'Name', 'Orion5KeepAlive', 'ExecutionMode', 'fixedSpacing', 'TimerFcn', @obj.keepAliveFcn);
             start(obj.tmr);
             
+            % ADDED BY SAM2 AND LINDSEY2 - SET CORRECT GRIPPER LIMITS
+            obj.setVar(obj.CLAW, 'misc variables', 'ccwAngleLimit', 1080)
+
             pause(1);
             disp('Orion5.m: Ready');
             
             if ~obj.set_flag()
                 obj.stop();
                 error('Orion5.m: Server busy, is code running elsewhere?');
+                obj.writeToDebug('err ', 'constructor() server busy');
             end
+            
+            obj.writeToDebug('info', 'constructor() finished');
         end
         
         %% Cleanup Functions
         function stop(obj)
+            obj.writeToDebug('info', 'stop() called');
             tClean = isa(obj.tmr, 'timer');
             sClean = isa(obj.socket, 'tcpip');
             if (~tClean && ~sClean)
@@ -81,6 +95,7 @@ classdef Orion5 < handle
             if sClean
                 obj.socket = 0;
             end
+            obj.writeToDebug('info', 'stop() finished');
             obj.locked = 0;
         end
         
@@ -92,6 +107,11 @@ classdef Orion5 < handle
         function setAllJointsPosition(obj, positions)
             if ~all(size(positions) == [1 5])
                 error('Orion5.m: setAllJointsPosition requires an array of length 5');
+            end
+            if positions(obj.CLAW+1) > 359
+                positions(obj.CLAW+1) = 359;
+            elseif positions(obj.CLAW+1) < 70
+                positions(obj.CLAW+1) = 70;
             end
             positions = wrapTo360(positions);
             obj.setVar(0, 'posControl', '', positions);
@@ -113,6 +133,11 @@ classdef Orion5 < handle
         end
         
         function setJointPosition(obj, jointID, pos)
+            if jointID == obj.CLAW && pos > 359
+                pos = 359;
+            elseif jointID == obj.CLAW && pos < 70
+                pos = 70;
+            end
             pos = wrapTo360(pos);
         	obj.setVar(jointID, 'control variables', 'goalPosition', pos);
         end
@@ -148,6 +173,11 @@ classdef Orion5 < handle
 
         function setConfigValue(obj, name, value)
         	obj.setVar(0, 'config', name, value);
+        end
+        
+        function setDebug(obj, debug_status)
+            obj.debug = debug_status;
+            obj.setVar(0, 'debug', '', debug_status);
         end
         
         %% Getters
@@ -201,6 +231,7 @@ classdef Orion5 < handle
                         new_data = native2unicode(fread(obj.socket, obj.socket.BytesAvailable)');
                     catch
                         warning('Orion5.m: Socket error, stopping.');
+                        obj.writeToDebug('err ', 'read() socket error');
                         obj.stop();
                         obj.locked = 0;
                         return;
@@ -209,6 +240,7 @@ classdef Orion5 < handle
                 else
                     if toc(start_time) > obj.read_timeout
                         warning('Orion5.m: Socket timeout on read, stopping.');
+                        obj.writeToDebug('err ', 'read() socket timeout');
                         obj.stop();
                         return
                     end
@@ -226,6 +258,7 @@ classdef Orion5 < handle
                                 obj.read_buffer = obj.read_buffer(6 + num_bytes : end);
                                 data = split2{2};
                                 obj.locked = 0;
+                                obj.writeToDebug('recv', data);
                                 return;
                             end
                         end
@@ -240,15 +273,32 @@ classdef Orion5 < handle
                 pause(0.005);
             end
             obj.locked = 1;
+            obj.writeToDebug('send', to_send);
             to_send = cell2mat({'$', sprintf('%03d', length(to_send)), '&', to_send});
             try
                 fwrite(obj.socket, to_send);
             catch
                 warning('Orion5.m: Socket error, stopping.');
+                obj.writeToDebug('err ', 'write() socket error');
                 obj.stop();
                 return;
             end
             obj.locked = 0;
+        end
+        
+        function writeToDebug(obj, info, data)
+            if ~obj.debug
+                return
+            end
+            
+            fileID = fopen(obj.debug_filename, 'a');
+            fprintf(fileID, info);
+            fprintf(fileID, '-');
+            fprintf(fileID, datestr(now,'HH:MM:SS.FFF'));
+            fprintf(fileID, ': ');
+            fprintf(fileID, data);
+            fprintf(fileID, '\n');
+            fclose(fileID);
         end
         
         function success = set_flag(obj)
@@ -261,6 +311,7 @@ classdef Orion5 < handle
         function setVar(obj, jointID, id1, id2, value)
             if ~isa(obj.socket, 'tcpip')
                 error('Orion5.m: Socket not open, recreate Orion5() object.');
+                obj.writeToDebug('err ', 'setVar() socket not open');
             end
             
             if strcmp(id1, 'posControl')
@@ -281,6 +332,7 @@ classdef Orion5 < handle
         function var = getVar(obj, jointID, id1, id2)
             if ~isa(obj.socket, 'tcpip')
                 error('Orion5.m: Socket not open, recreate Orion5() object.');
+                obj.writeToDebug('err ', 'getVar() socket not open');
             end
             
             jointID = num2str(jointID);
@@ -298,6 +350,7 @@ classdef Orion5 < handle
                 end
             catch
                 warning('Orion5.m: Read error, stopping.');
+                obj.writeToDebug('err ', 'getVar() read error');
                 obj.stop();
                 return;
             end

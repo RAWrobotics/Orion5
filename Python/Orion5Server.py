@@ -7,9 +7,16 @@ from threading import Thread, Lock
 import sys
 import argparse
 import random
+import datetime as dt
 
 import orion5
 import orion5.utils as utils
+
+
+def write_debug(tag, message):
+    timestamp = dt.datetime.now().strftime("%x-%X")
+    with open('orion5_server_log.txt', 'a') as log:
+        log.write('{:s}-{:s}: {:s}\n'.format(tag, timestamp, message))
 
 
 def getRandomID():
@@ -43,11 +50,14 @@ class SocketThread(Thread):
         self.id = id
         self.connected = True
         self.timeouts = 0
+        self.debug = 0
 
     def stop(self):
         self.connected = False
         self.socket.close()
         print('{} - Disconnected'.format(self.id))
+        if self.debug:
+            write_debug('info', 'stop() called')
 
     def run(self):
         try:
@@ -73,26 +83,40 @@ class SocketThread(Thread):
                                     if len(e[1]) == length:
                                         read_buffer = read_buffer[5+length:]
                                         self.timeouts = 0
+                                        if self.debug:
+                                            write_debug('recv', str(e[1]))
                                         self.process(e[1])
                     else:
                         self.timeouts += 1
+                        if self.debug:
+                            write_debug('info', 'Timeout 1 value: ' + str(self.timeouts))
                         if self.timeouts > utils.SOCKET_MAX_TIMEOUTS:
-                            print('{} - Timeout'.format(self.id))
+                            print('{} - Timeout 1'.format(self.id))
+                            if self.debug:
+                                write_debug('err ', 'Timeout 1 triggered')
                             self.stop()
 
                 else:
                     self.timeouts += 1
+                    if self.debug:
+                        write_debug('info', 'Timeout 2 value: ' + str(self.timeouts))
                     if self.timeouts > utils.SOCKET_MAX_TIMEOUTS:
-                        print('{} - Timeout'.format(self.id))
+                        print('{} - Timeout 2'.format(self.id))
+                        if self.debug:
+                            write_debug('err ', 'Timeout 2 triggered')
                         self.stop()
 
         except Exception as e:
             print('client error in read:', e)
+            if self.debug:
+                write_debug('err ', 'client error in read')
             traceback.print_tb(e.__traceback__)
         finally:
             self.stop()
 
     def write(self, data):
+        if self.debug:
+            write_debug('send', str(data))
         self.socket.sendall(('$' + '{:03d}'.format(len(data)) + '&' + str(data)).encode())
 
     def process(self, data):
@@ -146,6 +170,10 @@ class SocketThread(Thread):
             elif data_dict['id1'] == 'enControl':
                 self.orion.setAllJointsTorqueEnable(eval(data[3]))
 
+            elif data_dict['id1'] == 'debug':
+                self.debug = eval(data[3])
+                print(self.debug)
+
             elif data_dict['id1'] == 'simulator':
                 if data[3] == 'activate':
                     self.orion.simulator.Start()
@@ -191,6 +219,9 @@ class SocketThread(Thread):
                 success = 1 if self.flag.trySet(self.id) else 0
                 self.write((data_dict['id1'] + '+' + str(success)))
 
+            elif data_dict['id1'] == 'renderer':
+                print(data)
+
             elif len(data) == 4:
                 value = tryConversion(data)
                 if value == None:
@@ -199,7 +230,7 @@ class SocketThread(Thread):
 
             elif len(data) == 3:
                 var = self.orion.joints[data_dict['jointID']].getVariable(data_dict['id1'], data_dict['id2'])
-                self.write((data_dict['id1'] + '+' + str(var)))
+                self.socket.sendall(str(var))
 
 
 class Flag(object):
