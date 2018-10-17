@@ -7,7 +7,7 @@ print('\nSearching for Orion5...')
 comport = waitForOrion5Forever()
 print('Found Orion5, serial port name:', comport)
 
-orion = orion5.Orion5(comport)
+orion = orion5.Orion5(mode='standalone', serialName=comport)
 time.sleep(3)
 
 def gotoPositionBlocking(pos):
