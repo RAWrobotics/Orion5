@@ -161,6 +161,11 @@ class SocketThread(Thread):
                     self.orion.serial.RequestFirmwareVersion()
                 self.write((data_dict['id1'] + '+' + str(self.orion.getVariable('firmwareVersion'))))
 
+            elif data_dict['id1'] == 'serialNum':
+                if self.orion.serial is not None:
+                    self.orion.serial.RequestSerialNum()
+                self.write((data_dict['id1'] + '+' + str(self.orion.getVariable('serialNum'))))
+
             elif data_dict['id1'] == 'posControl':
                 self.orion.setAllJointsPosition(eval(data[3]))
 
@@ -172,7 +177,6 @@ class SocketThread(Thread):
 
             elif data_dict['id1'] == 'debug':
                 self.debug = eval(data[3])
-                print(self.debug)
 
             elif data_dict['id1'] == 'simulator':
                 if data[3] == 'activate':
@@ -218,9 +222,6 @@ class SocketThread(Thread):
             elif data_dict['id1'] == 'trySetFlag':
                 success = 1 if self.flag.trySet(self.id) else 0
                 self.write((data_dict['id1'] + '+' + str(success)))
-
-            elif data_dict['id1'] == 'renderer':
-                print(data)
 
             elif len(data) == 4:
                 value = tryConversion(data)
